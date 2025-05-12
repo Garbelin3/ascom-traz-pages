@@ -1,3 +1,6 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@300;400;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -96,6 +99,34 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-nunito;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-inter font-bold;
+  }
+
+  .ascom-container {
+    @apply container mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-primary {
+    @apply bg-ascom px-6 py-3 rounded-full text-white font-medium hover:bg-ascom-dark transition-all duration-300 shadow-lg;
+  }
+
+  .btn-secondary {
+    @apply bg-white px-6 py-3 rounded-full text-ascom border border-ascom font-medium hover:bg-gray-50 transition-all duration-300;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-800;
+  }
+
+  .section-subtitle {
+    @apply text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto;
+  }
+
+  .benefit-card {
+    @apply p-6 rounded-lg border border-gray-100 bg-white shadow-md hover:shadow-lg transition-all duration-300;
   }
 }

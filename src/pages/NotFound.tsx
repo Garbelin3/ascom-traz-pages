@@ -1,5 +1,9 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
+
+import React, { useEffect } from "react";
+import { useLocation, Link } from "react-router-dom";
+import NavBar from "../components/NavBar";
+import Footer from "../components/Footer";
+import CallToActionButton from "../components/CallToActionButton";
 
 const NotFound = () => {
   const location = useLocation();
@@ -12,14 +16,23 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <div className="min-h-screen flex flex-col">
+      <NavBar />
+      <div className="flex-grow flex items-center justify-center bg-gray-50 py-20">
+        <div className="text-center px-4">
+          <h1 className="text-6xl md:text-8xl font-bold text-ascom mb-6">404</h1>
+          <p className="text-2xl md:text-3xl text-gray-700 mb-8">Oops! Página não encontrada</p>
+          <p className="text-lg text-gray-600 mb-10 max-w-md mx-auto">
+            Parece que você está tentando acessar uma página que não existe ou foi removida.
+          </p>
+          <CallToActionButton
+            text="Voltar para a Página Inicial"
+            href="/"
+            primary={true}
+          />
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
