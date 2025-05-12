@@ -29,7 +29,7 @@ const NavBar = () => {
       <div className="ascom-container flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
-            src="/public/logo.png" 
+            src="logo.png" 
             alt="Ascom Traz Comunidade" 
             className="h-12 md:h-14" 
           />

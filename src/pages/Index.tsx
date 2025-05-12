@@ -40,7 +40,7 @@ const Index = () => {
             </div>
             <div className="md:w-1/2 flex justify-center">
               <img 
-                src="/public/img.jpg" 
+                src="/img.jpg" 
                 alt="Entregador em ação"
                 className="rounded-lg shadow-xl w-full max-w-md object-cover"
               />
