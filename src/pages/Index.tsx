@@ -1,4 +1,3 @@
-
 import React from 'react';
 import NavBar from '../components/NavBar';
 import CallToActionButton from '../components/CallToActionButton';
@@ -41,7 +40,7 @@ const Index = () => {
             </div>
             <div className="md:w-1/2 flex justify-center">
               <img 
-                src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80" 
+                src="/public/img.jpg" 
                 alt="Entregador em ação"
                 className="rounded-lg shadow-xl w-full max-w-md object-cover"
               />

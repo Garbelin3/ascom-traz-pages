@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -30,7 +29,7 @@ const NavBar = () => {
       <div className="ascom-container flex justify-between items-center">
         <Link to="/" className="flex items-center">
           <img 
-            src="/lovable-uploads/e13fbf54-6ff9-41f9-a06b-914733863149.png" 
+            src="/public/logo.png" 
             alt="Ascom Traz Comunidade" 
             className="h-12 md:h-14" 
           />
