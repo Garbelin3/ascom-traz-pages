@@ -9,7 +9,8 @@ import {
   Home,
   LayoutDashboard,
   Users,
-  Settings
+  Settings,
+  Store
 } from 'lucide-react';
 
 interface AdminLayoutProps {
