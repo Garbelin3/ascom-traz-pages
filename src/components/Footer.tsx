@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Phone, Mail, MapPin, ExternalLink, Instagram, Facebook, Linkedin } from 'lucide-react';
+import { Phone, Mail, MapPin, ExternalLink, Instagram, Facebook, Linkedin, ChevronDown } from 'lucide-react';
 
 const Footer = () => {
   const location = useLocation();
