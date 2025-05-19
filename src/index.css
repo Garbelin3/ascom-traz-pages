@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito+Sans:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito+Sans:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -38,19 +38,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,14 +89,47 @@
 @layer base {
   * {
     @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
     @apply bg-background text-foreground font-nunito;
+    margin: 0;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-inter font-bold;
+    letter-spacing: -0.025em;
+  }
+
+  h1 {
+    @apply text-3xl md:text-4xl lg:text-5xl xl:text-6xl;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl lg:text-4xl;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl lg:text-3xl;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
   }
 
   .ascom-container {
@@ -111,15 +137,15 @@
   }
 
   .btn-primary {
-    @apply bg-ascom px-6 py-3 rounded-full text-white font-medium hover:bg-ascom-dark transition-all duration-300 shadow-lg;
+    @apply bg-ascom px-6 py-3 rounded-full text-white font-medium hover:bg-ascom-dark transition-all duration-300 shadow-lg transform hover:-translate-y-1 flex items-center justify-center;
   }
 
   .btn-secondary {
-    @apply bg-white px-6 py-3 rounded-full text-ascom border border-ascom font-medium hover:bg-gray-50 transition-all duration-300;
+    @apply bg-white px-6 py-3 rounded-full text-ascom border-2 border-ascom font-medium hover:bg-gray-50 transition-all duration-300 shadow-sm transform hover:-translate-y-1 flex items-center justify-center;
   }
 
   .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-800;
+    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-800 tracking-tight;
   }
 
   .section-subtitle {
@@ -127,6 +153,34 @@
   }
 
   .benefit-card {
-    @apply p-6 rounded-lg border border-gray-100 bg-white shadow-md hover:shadow-lg transition-all duration-300;
+    @apply p-6 rounded-xl border border-gray-100 bg-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2;
+  }
+
+  /* Card with gradient border */
+  .gradient-border {
+    position: relative;
+    border-radius: 1rem;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, #0FA0CE, #33C3F0) border-box;
+    border: 3px solid transparent;
+  }
+
+  /* Glassmorphism effect */
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  /* Custom animations */
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.6s ease-in;
+  }
+  
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
   }
 }
