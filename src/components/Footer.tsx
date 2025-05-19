@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -20,11 +21,11 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-bold mb-4 border-b border-gray-700 pb-2">Links Úteis</h3>
             <ul className="space-y-2">
-              <li><a href="#sobre" className="text-gray-300 hover:text-ascom-light transition-colors">Quem Somos</a></li>
-              <li><a href="#entregadores" className="text-gray-300 hover:text-ascom-light transition-colors">Para Entregadores</a></li>
-              <li><a href="#comercios" className="text-gray-300 hover:text-ascom-light transition-colors">Para Comércios</a></li>
-              <li><a href="#impacto" className="text-gray-300 hover:text-ascom-light transition-colors">Nosso Impacto</a></li>
-              <li><a href="#como-funciona" className="text-gray-300 hover:text-ascom-light transition-colors">Como Funciona</a></li>
+              <li><Link to="/#sobre" className="text-gray-300 hover:text-ascom-light transition-colors">Quem Somos</Link></li>
+              <li><Link to="/#entregadores" className="text-gray-300 hover:text-ascom-light transition-colors">Para Entregadores</Link></li>
+              <li><Link to="/#comercios" className="text-gray-300 hover:text-ascom-light transition-colors">Para Comércios</Link></li>
+              <li><Link to="/#impacto" className="text-gray-300 hover:text-ascom-light transition-colors">Nosso Impacto</Link></li>
+              <li><Link to="/#como-funciona" className="text-gray-300 hover:text-ascom-light transition-colors">Como Funciona</Link></li>
             </ul>
           </div>
           

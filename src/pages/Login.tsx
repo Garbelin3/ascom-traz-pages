@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   email: z.string().email('Email inválido'),
@@ -38,6 +39,17 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Login() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Redirecionamento automático se o usuário já estiver logado
+  useEffect(() => {
+    if (user) {
+      // Redirect to appropriate dashboard based on user role
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -98,19 +110,9 @@ export default function Login() {
       });
 
       // Redirecionar com base no papel
-      switch (userData.role) {
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'entregador':
-          navigate('/entregador/dashboard');
-          break;
-        case 'comercio':
-          navigate('/comercio/dashboard');
-          break;
-        default:
-          navigate('/');
-      }
+      const redirectTo = location.state?.from?.pathname || getRedirectByRole(userData.role);
+      navigate(redirectTo, { replace: true });
+      
     } catch (error: any) {
       toast({
         title: 'Erro inesperado',
@@ -119,6 +121,20 @@ export default function Login() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Helper para determinar para onde redirecionar com base no papel do usuário
+  const getRedirectByRole = (role: string): string => {
+    switch (role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'entregador':
+        return '/entregador/dashboard';
+      case 'comercio':
+        return '/comercio/dashboard';
+      default:
+        return '/';
     }
   };
 
