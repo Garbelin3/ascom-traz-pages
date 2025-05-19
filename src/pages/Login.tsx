@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -139,33 +139,34 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-blue-100">
       <NavBar />
-      <div className="flex-grow flex items-center justify-center bg-gradient-to-br from-white via-blue-50 to-blue-100 p-4">
-        <Card className="mx-auto max-w-sm w-full">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Login</CardTitle>
-            <CardDescription className="text-center">
+      <div className="flex-grow flex items-center justify-center p-4 my-12">
+        <Card className="mx-auto max-w-md w-full shadow-xl border border-blue-100 overflow-hidden">
+          <CardHeader className="space-y-1 bg-gradient-to-r from-ascom-light to-ascom text-white p-6">
+            <CardTitle className="text-2xl font-bold text-center">Acesse sua conta</CardTitle>
+            <CardDescription className="text-center text-white/90">
               Entre com seu email e senha para acessar sua conta
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="seu-email@exemplo.com"
                           type="email"
+                          className="h-11 rounded-md border-gray-300 focus:border-ascom focus:ring-1 focus:ring-ascom"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
@@ -174,21 +175,22 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Senha</FormLabel>
+                      <FormLabel className="text-gray-700 font-medium">Senha</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="******"
                           type="password"
+                          className="h-11 rounded-md border-gray-300 focus:border-ascom focus:ring-1 focus:ring-ascom"
                           {...field}
                         />
                       </FormControl>
-                      <FormMessage />
+                      <FormMessage className="text-red-500" />
                     </FormItem>
                   )}
                 />
                 <Button
                   type="submit"
-                  className="w-full bg-ascom hover:bg-ascom-dark"
+                  className="w-full h-11 bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white font-semibold rounded-md shadow-md hover:shadow-lg transition-all duration-300"
                   disabled={isLoading}
                 >
                   {isLoading ? "Entrando..." : "Entrar"}
@@ -196,25 +198,27 @@ export default function Login() {
               </form>
             </Form>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <div className="text-sm text-center text-gray-500">
+          <CardFooter className="flex flex-col space-y-4 bg-gray-50 p-6 border-t border-gray-100">
+            <div className="text-sm text-center text-gray-600 font-medium">
               Não tem uma conta ainda?
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate('/cadastro-entregador')}
-              >
-                Cadastro Entregador
-              </Button>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => navigate('/cadastro-comercio')}
-              >
-                Cadastro Comércio
-              </Button>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <Link to="/cadastro-entregador">
+                <Button
+                  variant="outline"
+                  className="w-full border-ascom text-ascom hover:bg-ascom-light hover:text-white hover:border-transparent transition-all duration-300"
+                >
+                  Cadastro Entregador
+                </Button>
+              </Link>
+              <Link to="/cadastro-comercio">
+                <Button
+                  variant="outline"
+                  className="w-full border-ascom text-ascom hover:bg-ascom-light hover:text-white hover:border-transparent transition-all duration-300"
+                >
+                  Cadastro Comércio
+                </Button>
+              </Link>
             </div>
           </CardFooter>
         </Card>

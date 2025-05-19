@@ -6,11 +6,19 @@ import EntregadorForm from '../components/forms/EntregadorForm';
 
 const CadastroEntregador = () => {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-blue-100">
       <NavBar />
-      <div className="flex-1 bg-gradient-to-br from-white via-blue-50 to-blue-100 py-12">
+      <div className="flex-1 py-12">
         <div className="ascom-container max-w-4xl mx-auto px-4">
-          <EntregadorForm />
+          <div className="bg-white rounded-lg shadow-xl border border-blue-100 p-6 md:p-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-center mb-2 text-gray-800">
+              Cadastro de Entregador
+            </h1>
+            <p className="text-center text-gray-600 mb-8">
+              Preencha os campos abaixo para se cadastrar como entregador parceiro
+            </p>
+            <EntregadorForm />
+          </div>
         </div>
       </div>
       <Footer />
