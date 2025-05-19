@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Phone, Mail, MapPin, ExternalLink, Instagram, Facebook, Linkedin, LogIn } from 'lucide-react';
@@ -21,8 +20,8 @@ const Footer = () => {
   };
 
   const handleLoginClick = () => {
-    // Direct navigation to login page
-    window.location.href = '/login';
+    // Use React Router's navigate instead of direct window.location change
+    navigate('/login');
   };
 
   const currentYear = new Date().getFullYear();

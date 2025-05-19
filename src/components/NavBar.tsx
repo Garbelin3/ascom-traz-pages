@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, LogIn } from 'lucide-react';
@@ -47,8 +46,8 @@ const NavBar = () => {
   };
 
   const handleLoginClick = () => {
-    // Navigate directly to login page without any conditions
-    window.location.href = '/login';
+    // Use React Router's navigate instead of direct window.location change
+    navigate('/login');
   };
 
   return (
