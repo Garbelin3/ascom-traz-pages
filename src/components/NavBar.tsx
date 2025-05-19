@@ -47,7 +47,8 @@ const NavBar = () => {
   };
 
   const handleLoginClick = () => {
-    navigate('/login');
+    // Navigate directly to login page without any conditions
+    window.location.href = '/login';
   };
 
   return (

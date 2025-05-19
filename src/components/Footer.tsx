@@ -20,6 +20,11 @@ const Footer = () => {
     }
   };
 
+  const handleLoginClick = () => {
+    // Direct navigation to login page
+    window.location.href = '/login';
+  };
+
   const currentYear = new Date().getFullYear();
 
   return (
@@ -126,13 +131,13 @@ const Footer = () => {
                 <span>Vila Velha, ES</span>
               </p>
               <div className="pt-4 mt-4 border-t border-gray-700">
-                <Link 
-                  to="/login" 
+                <button 
+                  onClick={handleLoginClick} 
                   className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white transition-colors text-sm font-medium gap-2"
                 >
                   <LogIn size={16} />
                   Área Restrita
-                </Link>
+                </button>
               </div>
             </div>
           </div>
