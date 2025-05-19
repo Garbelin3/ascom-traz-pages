@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Phone, Mail, MapPin, ExternalLink, Instagram, Facebook, Linkedin, ChevronDown } from 'lucide-react';
+import { Phone, Mail, MapPin, ExternalLink, Instagram, Facebook, Linkedin, LogIn } from 'lucide-react';
 
 const Footer = () => {
   const location = useLocation();
@@ -127,10 +128,10 @@ const Footer = () => {
               <div className="pt-4 mt-4 border-t border-gray-700">
                 <Link 
                   to="/login" 
-                  className="inline-flex items-center px-4 py-2 rounded-full bg-ascom hover:bg-ascom-light text-white transition-colors text-sm font-medium"
+                  className="inline-flex items-center px-6 py-2 rounded-full bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white transition-colors text-sm font-medium gap-2"
                 >
+                  <LogIn size={16} />
                   Área Restrita
-                  <ChevronDown className="ml-1 h-4 w-4" />
                 </Link>
               </div>
             </div>

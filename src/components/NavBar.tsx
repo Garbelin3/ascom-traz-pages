@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, ChevronDown } from 'lucide-react';
+import { Menu, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const NavBar = () => {
@@ -46,15 +46,15 @@ const NavBar = () => {
     }
   };
 
-  const handleAdminClick = () => {
+  const handleLoginClick = () => {
     navigate('/login');
   };
 
   return (
     <nav 
-      className={`fixed w-full z-30 transition-all duration-300 ${
+      className={`fixed w-full z-30 transition-all duration-500 ${
         isScrolled || location.pathname !== '/' ? 
-        'bg-gradient-to-r from-white to-blue-50 backdrop-blur-sm shadow-lg py-2' : 
+        'bg-gradient-to-r from-white/90 via-blue-50/90 to-blue-100/90 backdrop-blur-md shadow-lg py-2' : 
         'bg-transparent py-4'
       }`}
     >
@@ -89,12 +89,12 @@ const NavBar = () => {
           ) : (
             <Link to="/" className="text-gray-700 hover:text-ascom transition-colors font-medium">Início</Link>
           )}
-          <Link to="/login" className="text-gray-700 hover:text-ascom transition-colors font-medium">Login</Link>
           <Button 
-            onClick={handleAdminClick}
-            className="bg-ascom hover:bg-ascom-dark text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-full px-6 py-2 flex items-center"
+            onClick={handleLoginClick}
+            className="bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-full px-6 py-2 flex items-center gap-2"
           >
-            Área Admin <ChevronDown className="ml-1 h-4 w-4" />
+            <LogIn size={18} />
+            <span>Entrar</span>
           </Button>
         </div>
       </div>
@@ -144,17 +144,12 @@ const NavBar = () => {
                 Início
               </Link>
             )}
-            <Link 
-              to="/login" 
-              className="py-3 text-gray-700 hover:text-ascom transition-colors border-b border-gray-100 font-medium"
-            >
-              Login
-            </Link>
             <Button 
-              onClick={handleAdminClick}
-              className="mt-3 bg-ascom hover:bg-ascom-dark text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-full px-6 py-2 flex items-center justify-center"
+              onClick={handleLoginClick}
+              className="mt-4 bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 rounded-full px-6 py-2 flex items-center justify-center gap-2"
             >
-              Área Admin <ChevronDown className="ml-1 h-4 w-4" />
+              <LogIn size={18} />
+              <span>Entrar</span>
             </Button>
           </div>
         </div>
