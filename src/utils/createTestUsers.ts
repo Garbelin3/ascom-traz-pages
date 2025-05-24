@@ -18,16 +18,9 @@ export const createTestUsers = async () => {
 
     if (adminAuthError) {
       console.error('Erro ao criar admin:', adminAuthError);
+      throw adminAuthError;
     } else {
       console.log('Admin criado:', adminAuth.user?.id);
-      
-      // Aprovar o admin automaticamente
-      if (adminAuth.user) {
-        await supabase
-          .from('users')
-          .update({ status: 'aprovado' })
-          .eq('id', adminAuth.user.id);
-      }
     }
 
     // 2. Criar usuário entregador
@@ -43,12 +36,16 @@ export const createTestUsers = async () => {
 
     if (entregadorAuthError) {
       console.error('Erro ao criar entregador:', entregadorAuthError);
+      throw entregadorAuthError;
     } else {
       console.log('Entregador criado:', entregadorAuth.user?.id);
       
       if (entregadorAuth.user) {
+        // Aguardar um pouco para o trigger processar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // Inserir dados específicos do entregador
-        await supabase.from('entregadores').insert({
+        const { error: entregadorDataError } = await supabase.from('entregadores').insert({
           user_id: entregadorAuth.user.id,
           nome: 'João Silva',
           telefone: '(11) 99999-9999',
@@ -59,11 +56,19 @@ export const createTestUsers = async () => {
           veiculo: 'moto'
         });
 
+        if (entregadorDataError) {
+          console.error('Erro ao inserir dados do entregador:', entregadorDataError);
+        }
+
         // Aprovar o entregador
-        await supabase
+        const { error: updateError } = await supabase
           .from('users')
           .update({ status: 'aprovado' })
           .eq('id', entregadorAuth.user.id);
+
+        if (updateError) {
+          console.error('Erro ao aprovar entregador:', updateError);
+        }
       }
     }
 
@@ -80,12 +85,16 @@ export const createTestUsers = async () => {
 
     if (comercioAuthError) {
       console.error('Erro ao criar comércio:', comercioAuthError);
+      throw comercioAuthError;
     } else {
       console.log('Comércio criado:', comercioAuth.user?.id);
       
       if (comercioAuth.user) {
+        // Aguardar um pouco para o trigger processar
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         // Inserir dados específicos do comércio
-        await supabase.from('comercios').insert({
+        const { error: comercioDataError } = await supabase.from('comercios').insert({
           user_id: comercioAuth.user.id,
           nome_estabelecimento: 'Restaurante do João',
           nome_responsavel: 'Maria Santos',
@@ -97,11 +106,19 @@ export const createTestUsers = async () => {
           cep: '01234-567'
         });
 
+        if (comercioDataError) {
+          console.error('Erro ao inserir dados do comércio:', comercioDataError);
+        }
+
         // Aprovar o comércio
-        await supabase
+        const { error: updateError } = await supabase
           .from('users')
           .update({ status: 'aprovado' })
           .eq('id', comercioAuth.user.id);
+
+        if (updateError) {
+          console.error('Erro ao aprovar comércio:', updateError);
+        }
       }
     }
 
@@ -109,5 +126,6 @@ export const createTestUsers = async () => {
     
   } catch (error) {
     console.error('Erro ao criar usuários de teste:', error);
+    throw error;
   }
 };

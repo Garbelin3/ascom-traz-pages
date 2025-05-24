@@ -27,7 +27,6 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
-import CreateTestUsersButton from '../components/CreateTestUsersButton';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
@@ -160,20 +159,6 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
-            {/* Botão para criar usuários de teste - apenas para desenvolvimento */}
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800 mb-2">
-                <strong>Modo de Teste:</strong> Clique no botão abaixo para criar usuários de teste
-              </p>
-              <CreateTestUsersButton />
-              <div className="text-xs text-yellow-700 mt-2">
-                <p><strong>Admin:</strong> admin@teste.com</p>
-                <p><strong>Entregador:</strong> entregador@teste.com</p>
-                <p><strong>Comércio:</strong> comercio@teste.com</p>
-                <p><strong>Senha para todos:</strong> senha123</p>
-              </div>
-            </div>
-
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <FormField
