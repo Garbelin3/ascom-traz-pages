@@ -18,7 +18,11 @@ export const createTestUsers = async () => {
 
     if (adminAuthError) {
       console.error('Erro ao criar admin:', adminAuthError);
-      throw adminAuthError;
+      if (adminAuthError.message.includes('User already registered')) {
+        console.log('Admin já existe, continuando...');
+      } else {
+        throw adminAuthError;
+      }
     } else {
       console.log('Admin criado:', adminAuth.user?.id);
     }
@@ -36,7 +40,11 @@ export const createTestUsers = async () => {
 
     if (entregadorAuthError) {
       console.error('Erro ao criar entregador:', entregadorAuthError);
-      throw entregadorAuthError;
+      if (entregadorAuthError.message.includes('User already registered')) {
+        console.log('Entregador já existe, continuando...');
+      } else {
+        throw entregadorAuthError;
+      }
     } else {
       console.log('Entregador criado:', entregadorAuth.user?.id);
       
@@ -85,7 +93,11 @@ export const createTestUsers = async () => {
 
     if (comercioAuthError) {
       console.error('Erro ao criar comércio:', comercioAuthError);
-      throw comercioAuthError;
+      if (comercioAuthError.message.includes('User already registered')) {
+        console.log('Comércio já existe, continuando...');
+      } else {
+        throw comercioAuthError;
+      }
     } else {
       console.log('Comércio criado:', comercioAuth.user?.id);
       
@@ -122,7 +134,7 @@ export const createTestUsers = async () => {
       }
     }
 
-    console.log('Todos os usuários de teste foram criados com sucesso!');
+    console.log('Processo de criação de usuários de teste concluído!');
     
   } catch (error) {
     console.error('Erro ao criar usuários de teste:', error);
