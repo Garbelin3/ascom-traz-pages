@@ -42,25 +42,19 @@ export default function Login() {
   const location = useLocation();
   const { user, session, userDetails, isLoading: authLoading } = useAuth();
   
-  console.log('Login page: Auth state -', { 
+  console.log('Login page: Estado da autenticação -', { 
     user: !!user, 
     session: !!session, 
     userDetails: !!userDetails, 
-    authLoading,
-    sessionValid: session && session.expires_at && session.expires_at > Date.now() / 1000
+    authLoading
   });
   
-  // Só redirecionar se o usuário estiver realmente autenticado com sessão válida
+  // Redirecionar usuários autenticados
   useEffect(() => {
-    if (!authLoading && user && session && userDetails) {
-      // Verificar se a sessão é válida
-      const isValidSession = session.access_token && session.expires_at && session.expires_at > Date.now() / 1000;
-      
-      if (isValidSession && userDetails.status === 'aprovado') {
-        console.log('Login page: Redirecionando usuário autenticado para dashboard');
-        const from = location.state?.from?.pathname || getRedirectByRole(userDetails.role);
-        navigate(from, { replace: true });
-      }
+    if (!authLoading && user && session && userDetails && userDetails.status === 'aprovado') {
+      console.log('Login page: Redirecionando usuário autenticado');
+      const from = location.state?.from?.pathname || getRedirectByRole(userDetails.role);
+      navigate(from, { replace: true });
     }
   }, [user, session, userDetails, authLoading, navigate, location]);
 
@@ -75,18 +69,31 @@ export default function Login() {
   const onSubmit = async (data: FormValues) => {
     try {
       setIsLoading(true);
-      console.log('Login: Tentando fazer login...');
+      console.log('Login: Tentando fazer login com Supabase Auth...');
 
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
+      // Usar o sistema de autenticação do Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) {
-        console.error('Login: Erro de autenticação:', error);
+      if (authError) {
+        console.error('Login: Erro de autenticação:', authError);
         toast({
           title: 'Erro ao fazer login',
-          description: error.message,
+          description: authError.message === 'Invalid login credentials' 
+            ? 'Email ou senha incorretos' 
+            : authError.message,
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!authData.user) {
+        console.error('Login: Usuário não encontrado após autenticação');
+        toast({
+          title: 'Erro ao fazer login',
+          description: 'Erro interno do servidor',
           variant: 'destructive',
         });
         return;
@@ -94,20 +101,22 @@ export default function Login() {
 
       console.log('Login: Autenticação bem-sucedida, verificando dados do usuário...');
 
-      // Verificar o papel/status do usuário
+      // Verificar se o usuário existe na nossa tabela personalizada
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', authData.user.id)
         .single();
 
-      if (userError) {
+      if (userError || !userData) {
         console.error('Login: Erro ao obter dados do usuário:', userError);
         toast({
           title: 'Erro ao obter dados do usuário',
-          description: userError.message,
+          description: 'Usuário não encontrado no sistema',
           variant: 'destructive',
         });
+        // Fazer logout se não conseguir encontrar os dados do usuário
+        await supabase.auth.signOut();
         return;
       }
 
@@ -118,20 +127,17 @@ export default function Login() {
           description: 'Seu cadastro ainda não foi aprovado por um administrador.',
           variant: 'destructive',
         });
-        // Deslogar o usuário já que ele não está aprovado
         await supabase.auth.signOut();
         return;
       }
 
-      console.log('Login: Login completo, redirecionando...');
+      console.log('Login: Login completo, usuário aprovado');
       toast({
         title: 'Login realizado com sucesso!',
         description: 'Você será redirecionado para a área apropriada.',
       });
 
-      // Redirecionar com base no papel
-      const redirectTo = location.state?.from?.pathname || getRedirectByRole(userData.role);
-      navigate(redirectTo, { replace: true });
+      // O redirecionamento será feito automaticamente pelo useEffect acima
       
     } catch (error: any) {
       console.error('Login: Erro inesperado:', error);
@@ -145,7 +151,6 @@ export default function Login() {
     }
   };
 
-  // Helper para determinar para onde redirecionar com base no papel do usuário
   const getRedirectByRole = (role: string): string => {
     switch (role) {
       case 'admin':
@@ -159,7 +164,6 @@ export default function Login() {
     }
   };
 
-  // Mostrar loading se ainda estiver verificando autenticação
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-blue-100">

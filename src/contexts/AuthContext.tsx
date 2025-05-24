@@ -25,6 +25,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserDetails = async (userId: string) => {
     try {
+      console.log('AuthContext: Buscando detalhes do usuário para ID:', userId);
       const { data, error } = await supabase
         .from('users')
         .select('*')
@@ -32,13 +33,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error('Erro ao buscar detalhes do usuário:', error);
+        console.error('AuthContext: Erro ao buscar detalhes do usuário:', error);
         return null;
       }
 
+      console.log('AuthContext: Detalhes do usuário encontrados:', data);
       return data;
     } catch (error) {
-      console.error('Erro ao buscar detalhes do usuário:', error);
+      console.error('AuthContext: Erro ao buscar detalhes do usuário:', error);
       return null;
     }
   };
@@ -51,55 +53,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    setIsLoading(true);
     console.log('AuthContext: Inicializando autenticação...');
+    setIsLoading(true);
 
     // Configurar o listener de mudança de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('AuthContext: Auth event:', event, 'Session valid:', !!session);
+      async (event, session) => {
+        console.log('AuthContext: Auth event:', event, 'Session válida:', !!session);
         
-        // Verificar se a sessão é válida antes de definir o estado
-        const isValidSession = session && session.access_token && session.expires_at && session.expires_at > Date.now() / 1000;
-        
-        if (isValidSession) {
+        if (session && session.user) {
+          console.log('AuthContext: Sessão válida encontrada, buscando detalhes do usuário...');
           setSession(session);
           setUser(session.user);
           
-          // Buscar detalhes do usuário
-          setTimeout(() => {
-            fetchUserDetails(session.user.id).then(details => {
-              setUserDetails(details);
-              setIsLoading(false);
-            });
-          }, 0);
+          // Buscar detalhes do usuário na nossa tabela personalizada
+          const details = await fetchUserDetails(session.user.id);
+          setUserDetails(details);
         } else {
-          // Limpar estado se a sessão não for válida
-          console.log('AuthContext: Sessão inválida ou expirada, limpando estado');
+          console.log('AuthContext: Nenhuma sessão válida, limpando estado');
           setSession(null);
           setUser(null);
           setUserDetails(null);
-          setIsLoading(false);
         }
+        
+        setIsLoading(false);
       }
     );
 
     // Verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log('AuthContext: Verificando sessão existente:', !!session);
       
-      const isValidSession = session && session.access_token && session.expires_at && session.expires_at > Date.now() / 1000;
-      
-      if (isValidSession) {
+      if (session && session.user) {
+        console.log('AuthContext: Sessão existente encontrada');
         setSession(session);
         setUser(session.user);
         
-        fetchUserDetails(session.user.id).then(details => {
-          setUserDetails(details);
-          setIsLoading(false);
-        });
-      } else {
-        console.log('AuthContext: Nenhuma sessão válida encontrada');
+        const details = await fetchUserDetails(session.user.id);
+        setUserDetails(details);
+      }
+      
+      if (!session) {
         setIsLoading(false);
       }
     });
