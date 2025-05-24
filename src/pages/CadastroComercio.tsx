@@ -7,7 +7,7 @@ const CadastroComercio = () => {
       <NavBar />
       <div className="flex-1 py-12">
         <div className="ascom-container max-w-4xl mx-auto px-4">
-          <div className="bg-white rounded-lg shadow-xl border border-blue-100 p-6 md:p-8 my-[30px]">
+          <div className="bg-white rounded-lg shadow-xl border border-blue-100 p-6 md:p-8">
             
             
             <ComercioForm />
