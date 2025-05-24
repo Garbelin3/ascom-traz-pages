@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from '@/components/ui/use-toast';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
+import CreateTestUsersButton from '../components/CreateTestUsersButton';
 import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
@@ -99,45 +100,13 @@ export default function Login() {
         return;
       }
 
-      console.log('Login: Autenticação bem-sucedida, verificando dados do usuário...');
-
-      // Verificar se o usuário existe na nossa tabela personalizada
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single();
-
-      if (userError || !userData) {
-        console.error('Login: Erro ao obter dados do usuário:', userError);
-        toast({
-          title: 'Erro ao obter dados do usuário',
-          description: 'Usuário não encontrado no sistema',
-          variant: 'destructive',
-        });
-        // Fazer logout se não conseguir encontrar os dados do usuário
-        await supabase.auth.signOut();
-        return;
-      }
-
-      if (userData.status !== 'aprovado') {
-        console.log('Login: Usuário não aprovado, fazendo logout...');
-        toast({
-          title: 'Conta pendente de aprovação',
-          description: 'Seu cadastro ainda não foi aprovado por um administrador.',
-          variant: 'destructive',
-        });
-        await supabase.auth.signOut();
-        return;
-      }
-
-      console.log('Login: Login completo, usuário aprovado');
+      console.log('Login: Autenticação bem-sucedida');
       toast({
         title: 'Login realizado com sucesso!',
         description: 'Você será redirecionado para a área apropriada.',
       });
 
-      // O redirecionamento será feito automaticamente pelo useEffect acima
+      // O redirecionamento será feito automaticamente pelo useEffect do AuthContext
       
     } catch (error: any) {
       console.error('Login: Erro inesperado:', error);
@@ -191,6 +160,20 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
+            {/* Botão para criar usuários de teste - apenas para desenvolvimento */}
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800 mb-2">
+                <strong>Modo de Teste:</strong> Clique no botão abaixo para criar usuários de teste
+              </p>
+              <CreateTestUsersButton />
+              <div className="text-xs text-yellow-700 mt-2">
+                <p><strong>Admin:</strong> admin@teste.com</p>
+                <p><strong>Entregador:</strong> entregador@teste.com</p>
+                <p><strong>Comércio:</strong> comercio@teste.com</p>
+                <p><strong>Senha para todos:</strong> senha123</p>
+              </div>
+            </div>
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                 <FormField

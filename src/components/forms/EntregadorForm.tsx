@@ -1,12 +1,11 @@
 
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { supabase } from "@/integrations/supabase/client";
-import { v4 as uuidv4 } from "uuid";
-
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -14,148 +13,93 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { toast } from '@/components/ui/use-toast';
 
 const formSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  email: z.string().email("Email inválido"),
-  senha: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-  confirmarSenha: z.string().min(6, "Confirme sua senha"),
-  telefone: z.string().min(10, "Telefone inválido"),
-  endereco: z.string().min(5, "Endereço inválido"),
-  cidade: z.string().min(2, "Cidade inválida"),
-  estado: z.string().min(2, "Estado inválido"),
-  cep: z.string().min(8, "CEP inválido"),
-  veiculo: z.enum(["moto", "carro", "bicicleta"]),
-}).refine((data) => data.senha === data.confirmarSenha, {
-  message: "As senhas não coincidem",
-  path: ["confirmarSenha"],
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+  nome: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  telefone: z.string().min(10, 'Telefone deve ter pelo menos 10 dígitos'),
+  endereco: z.string().min(5, 'Endereço deve ter pelo menos 5 caracteres'),
+  cidade: z.string().min(2, 'Cidade deve ter pelo menos 2 caracteres'),
+  estado: z.string().min(2, 'Estado deve ter pelo menos 2 caracteres'),
+  cep: z.string().min(8, 'CEP deve ter 8 dígitos').max(9, 'CEP deve ter no máximo 9 dígitos'),
+  veiculo: z.enum(['moto', 'carro', 'bicicleta']),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 const EntregadorForm = () => {
-  const [loading, setLoading] = useState(false);
-  const [cnhFile, setCnhFile] = useState<File | null>(null);
-  const [documentoVeiculoFile, setDocumentoVeiculoFile] = useState<File | null>(null);
-  const [isVeiculoMotorizado, setIsVeiculoMotorizado] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      nome: "",
-      email: "",
-      senha: "",
-      confirmarSenha: "",
-      telefone: "",
-      endereco: "",
-      cidade: "",
-      estado: "",
-      cep: "",
-      veiculo: "bicicleta",
+      email: '',
+      password: '',
+      nome: '',
+      telefone: '',
+      endereco: '',
+      cidade: '',
+      estado: '',
+      cep: '',
+      veiculo: 'moto',
     },
   });
 
-  const onVeiculoChange = (value: string) => {
-    setIsVeiculoMotorizado(value === "moto" || value === "carro");
-  };
-
-  const handleCnhChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setCnhFile(event.target.files[0]);
-    }
-  };
-
-  const handleDocumentoVeiculoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setDocumentoVeiculoFile(event.target.files[0]);
-    }
-  };
-
   const onSubmit = async (data: FormValues) => {
     try {
-      setLoading(true);
+      setIsLoading(true);
+      console.log('EntregadorForm: Iniciando cadastro com Supabase Auth...');
 
-      if (isVeiculoMotorizado && !cnhFile) {
-        toast({
-          title: "Erro",
-          description: "CNH é obrigatória para moto ou carro",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // 1. Criar o usuário no Auth
+      // 1. Criar usuário no Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
-        password: data.senha,
+        password: data.password,
+        options: {
+          data: {
+            role: 'entregador'
+          }
+        }
       });
 
       if (authError) {
-        throw authError;
-      }
-
-      const userId = authData.user?.id;
-      if (!userId) {
-        throw new Error("Falha ao criar usuário");
-      }
-
-      // 2. Inserir no banco users
-      const { error: usersError } = await supabase
-        .from("users")
-        .insert({
-          id: userId,
-          email: data.email,
-          password: data.senha, // Normalmente não armazenamos senhas, mas este é um requisito do projeto
-          role: "entregador",
-          status: "pendente",
+        console.error('EntregadorForm: Erro no Supabase Auth:', authError);
+        toast({
+          title: 'Erro ao criar conta',
+          description: authError.message,
+          variant: 'destructive',
         });
-
-      if (usersError) {
-        throw usersError;
+        return;
       }
 
-      let cnhUrl = null;
-      let documentoVeiculoUrl = null;
-
-      // 3. Upload dos arquivos (se houver)
-      if (cnhFile) {
-        const cnhFileName = `${userId}/cnh_${uuidv4()}`;
-        const { error: uploadCnhError, data: uploadCnhData } = await supabase.storage
-          .from("documents")
-          .upload(cnhFileName, cnhFile);
-
-        if (uploadCnhError) {
-          throw uploadCnhError;
-        }
-
-        cnhUrl = uploadCnhData.path;
+      if (!authData.user) {
+        console.error('EntregadorForm: Usuário não foi criado');
+        toast({
+          title: 'Erro ao criar conta',
+          description: 'Erro interno do servidor',
+          variant: 'destructive',
+        });
+        return;
       }
 
-      if (documentoVeiculoFile) {
-        const docFileName = `${userId}/doc_veiculo_${uuidv4()}`;
-        const { error: uploadDocError, data: uploadDocData } = await supabase.storage
-          .from("documents")
-          .upload(docFileName, documentoVeiculoFile);
+      console.log('EntregadorForm: Usuário criado com sucesso:', authData.user.id);
 
-        if (uploadDocError) {
-          throw uploadDocError;
-        }
-
-        documentoVeiculoUrl = uploadDocData.path;
-      }
-
-      // 4. Inserir dados do entregador
+      // 2. Inserir dados específicos do entregador
       const { error: entregadorError } = await supabase
-        .from("entregadores")
+        .from('entregadores')
         .insert({
-          user_id: userId,
+          user_id: authData.user.id,
           nome: data.nome,
           telefone: data.telefone,
           endereco: data.endereco,
@@ -163,241 +107,212 @@ const EntregadorForm = () => {
           estado: data.estado,
           cep: data.cep,
           veiculo: data.veiculo,
-          cnh_url: cnhUrl,
-          documento_veiculo_url: documentoVeiculoUrl,
         });
 
       if (entregadorError) {
-        throw entregadorError;
+        console.error('EntregadorForm: Erro ao inserir dados do entregador:', entregadorError);
+        toast({
+          title: 'Erro ao salvar dados',
+          description: 'Houve um problema ao salvar seus dados',
+          variant: 'destructive',
+        });
+        return;
       }
 
+      console.log('EntregadorForm: Cadastro completo realizado com sucesso');
+      
       toast({
-        title: "Cadastro realizado com sucesso!",
-        description: "Aguarde a aprovação do administrador.",
+        title: 'Cadastro realizado com sucesso!',
+        description: 'Seu cadastro foi enviado para aprovação.',
       });
 
-      // Redirecionamento após o cadastro bem-sucedido
-      navigate("/cadastro-sucesso");
+      navigate('/cadastro-sucesso');
+      
     } catch (error: any) {
+      console.error('EntregadorForm: Erro inesperado:', error);
       toast({
-        title: "Erro no cadastro",
-        description: error.message || "Ocorreu um erro ao processar seu cadastro",
-        variant: "destructive",
+        title: 'Erro inesperado',
+        description: error.message || 'Ocorreu um erro ao processar o cadastro',
+        variant: 'destructive',
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold">Cadastro de Entregador</h2>
-        <p className="text-gray-600">Preencha os dados abaixo para se cadastrar como entregador</p>
+    <div className="max-w-2xl mx-auto">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-ascom mb-4">
+          Cadastro de Entregador
+        </h1>
+        <p className="text-gray-600">
+          Preencha os dados abaixo para se cadastrar como entregador na plataforma ASCOM
+        </p>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="nome"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome Completo</FormLabel>
-                <FormControl>
-                  <Input placeholder="Digite seu nome completo" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" placeholder="seu-email@exemplo.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="senha"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Senha</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="******" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirmarSenha"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirmar Senha</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="******" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          {/* Dados de Login */}
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Dados de Acesso</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="seu-email@exemplo.com" type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Mínimo 6 caracteres" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
-          <FormField
-            control={form.control}
-            name="telefone"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Telefone</FormLabel>
-                <FormControl>
-                  <Input placeholder="(99) 99999-9999" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="endereco"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Endereço</FormLabel>
-                <FormControl>
-                  <Input placeholder="Rua, número, bairro" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="cidade"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cidade</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Sua cidade" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="estado"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estado</FormLabel>
-                  <FormControl>
-                    <Input placeholder="ES" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Dados Pessoais */}
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Dados Pessoais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="nome"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Seu nome completo" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="telefone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input placeholder="(00) 00000-0000" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
-          <FormField
-            control={form.control}
-            name="cep"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>CEP</FormLabel>
-                <FormControl>
-                  <Input placeholder="00000-000" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="veiculo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tipo de Veículo</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    onVeiculoChange(value);
-                  }}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o tipo de veículo" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="moto">Moto</SelectItem>
-                    <SelectItem value="carro">Carro</SelectItem>
-                    <SelectItem value="bicicleta">Bicicleta</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          {isVeiculoMotorizado && (
+          {/* Endereço */}
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Endereço</h3>
             <div className="space-y-4">
-              <div>
-                <FormLabel htmlFor="cnh" className="block mb-2">
-                  CNH (obrigatório para moto/carro)
-                </FormLabel>
-                <Input
-                  id="cnh"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleCnhChange}
-                  required
+              <FormField
+                control={form.control}
+                name="endereco"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Endereço</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Rua, número, complemento" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cidade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cidade</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Sua cidade" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Formatos aceitos: PDF, JPG, PNG
-                </p>
-              </div>
-
-              <div>
-                <FormLabel htmlFor="docVeiculo" className="block mb-2">
-                  Documento do Veículo (opcional)
-                </FormLabel>
-                <Input
-                  id="docVeiculo"
-                  type="file"
-                  accept="image/*,.pdf"
-                  onChange={handleDocumentoVeiculoChange}
+                <FormField
+                  control={form.control}
+                  name="estado"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estado</FormLabel>
+                      <FormControl>
+                        <Input placeholder="UF" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <p className="text-sm text-gray-500 mt-1">
-                  Formatos aceitos: PDF, JPG, PNG
-                </p>
+                <FormField
+                  control={form.control}
+                  name="cep"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CEP</FormLabel>
+                      <FormControl>
+                        <Input placeholder="00000-000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
-          )}
+          </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-ascom hover:bg-ascom-dark" 
-            disabled={loading}
+          {/* Veículo */}
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Informações do Veículo</h3>
+            <FormField
+              control={form.control}
+              name="veiculo"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipo de Veículo</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o tipo de veículo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="moto">Moto</SelectItem>
+                      <SelectItem value="carro">Carro</SelectItem>
+                      <SelectItem value="bicicleta">Bicicleta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-ascom to-ascom-light hover:from-ascom-light hover:to-ascom text-white font-semibold py-3 rounded-md shadow-md hover:shadow-lg transition-all duration-300"
+            disabled={isLoading}
           >
-            {loading ? "Enviando..." : "Cadastrar"}
+            {isLoading ? "Criando conta..." : "Criar Conta"}
           </Button>
         </form>
       </Form>
