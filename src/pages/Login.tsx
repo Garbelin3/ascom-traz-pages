@@ -40,16 +40,29 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, session, userDetails, isLoading: authLoading } = useAuth();
   
-  // Redirecionamento automático se o usuário já estiver logado
+  console.log('Login page: Auth state -', { 
+    user: !!user, 
+    session: !!session, 
+    userDetails: !!userDetails, 
+    authLoading,
+    sessionValid: session && session.expires_at && session.expires_at > Date.now() / 1000
+  });
+  
+  // Só redirecionar se o usuário estiver realmente autenticado com sessão válida
   useEffect(() => {
-    if (user) {
-      // Redirect to appropriate dashboard based on user role
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+    if (!authLoading && user && session && userDetails) {
+      // Verificar se a sessão é válida
+      const isValidSession = session.access_token && session.expires_at && session.expires_at > Date.now() / 1000;
+      
+      if (isValidSession && userDetails.status === 'aprovado') {
+        console.log('Login page: Redirecionando usuário autenticado para dashboard');
+        const from = location.state?.from?.pathname || getRedirectByRole(userDetails.role);
+        navigate(from, { replace: true });
+      }
     }
-  }, [user, navigate, location]);
+  }, [user, session, userDetails, authLoading, navigate, location]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -62,6 +75,7 @@ export default function Login() {
   const onSubmit = async (data: FormValues) => {
     try {
       setIsLoading(true);
+      console.log('Login: Tentando fazer login...');
 
       const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -69,6 +83,7 @@ export default function Login() {
       });
 
       if (error) {
+        console.error('Login: Erro de autenticação:', error);
         toast({
           title: 'Erro ao fazer login',
           description: error.message,
@@ -76,6 +91,8 @@ export default function Login() {
         });
         return;
       }
+
+      console.log('Login: Autenticação bem-sucedida, verificando dados do usuário...');
 
       // Verificar o papel/status do usuário
       const { data: userData, error: userError } = await supabase
@@ -85,6 +102,7 @@ export default function Login() {
         .single();
 
       if (userError) {
+        console.error('Login: Erro ao obter dados do usuário:', userError);
         toast({
           title: 'Erro ao obter dados do usuário',
           description: userError.message,
@@ -94,6 +112,7 @@ export default function Login() {
       }
 
       if (userData.status !== 'aprovado') {
+        console.log('Login: Usuário não aprovado, fazendo logout...');
         toast({
           title: 'Conta pendente de aprovação',
           description: 'Seu cadastro ainda não foi aprovado por um administrador.',
@@ -104,6 +123,7 @@ export default function Login() {
         return;
       }
 
+      console.log('Login: Login completo, redirecionando...');
       toast({
         title: 'Login realizado com sucesso!',
         description: 'Você será redirecionado para a área apropriada.',
@@ -114,6 +134,7 @@ export default function Login() {
       navigate(redirectTo, { replace: true });
       
     } catch (error: any) {
+      console.error('Login: Erro inesperado:', error);
       toast({
         title: 'Erro inesperado',
         description: error.message || 'Ocorreu um erro ao fazer login',
@@ -137,6 +158,22 @@ export default function Login() {
         return '/';
     }
   };
+
+  // Mostrar loading se ainda estiver verificando autenticação
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-blue-100">
+        <NavBar />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ascom mx-auto mb-4"></div>
+            <p className="text-gray-600">Verificando autenticação...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-white via-blue-50 to-blue-100">
