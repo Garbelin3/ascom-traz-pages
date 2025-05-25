@@ -23,11 +23,12 @@ interface Entregador {
   endereco: string;
   cidade: string;
   estado: string;
+  cep: string;
   veiculo: string;
   status: string;
-  cnh_url: string | null;
-  documento_veiculo_url: string | null;
   created_at: string;
+  user_id: string;
+  updated_at: string;
 }
 
 interface Comercio {
@@ -37,9 +38,13 @@ interface Comercio {
   telefone: string;
   endereco: string;
   cidade: string;
+  estado: string;
+  cep: string;
   tipo_negocio: string;
   status: string;
   created_at: string;
+  user_id: string;
+  updated_at: string;
 }
 
 const AdminDashboard: React.FC = () => {
@@ -130,11 +135,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const getDocumentUrl = (path: string | null) => {
-    if (!path) return null;
-    return supabase.storage.from('documents').getPublicUrl(path).data.publicUrl;
-  };
-
   return (
     <AdminLayout>
       <div className="p-6">
@@ -215,7 +215,6 @@ const AdminDashboard: React.FC = () => {
                           <th className="px-4 py-2 text-left">Cidade</th>
                           <th className="px-4 py-2 text-left">Veículo</th>
                           <th className="px-4 py-2 text-left">Status</th>
-                          <th className="px-4 py-2 text-left">Documentos</th>
                           <th className="px-4 py-2 text-center">Ações</th>
                         </tr>
                       </thead>
@@ -243,28 +242,6 @@ const AdminDashboard: React.FC = () => {
                                   : 'Pendente'
                                 }
                               </span>
-                            </td>
-                            <td className="px-4 py-2">
-                              {entregador.cnh_url && (
-                                <a 
-                                  href={getDocumentUrl(entregador.cnh_url)} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-ascom hover:underline mr-2"
-                                >
-                                  Ver CNH
-                                </a>
-                              )}
-                              {entregador.documento_veiculo_url && (
-                                <a 
-                                  href={getDocumentUrl(entregador.documento_veiculo_url)} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-ascom hover:underline"
-                                >
-                                  Ver Doc. Veículo
-                                </a>
-                              )}
                             </td>
                             <td className="px-4 py-2">
                               <div className="flex justify-center gap-2">
