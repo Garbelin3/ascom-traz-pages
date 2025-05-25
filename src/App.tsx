@@ -87,15 +87,15 @@ const App = () => {
   return (
     <React.StrictMode>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AuthProvider>
               <AppRoutes />
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </TooltipProvider>
       </QueryClientProvider>
     </React.StrictMode>
   );
