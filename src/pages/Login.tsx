@@ -49,10 +49,10 @@ export default function Login() {
     authLoading
   });
   
-  // Redirecionar usuários autenticados
+  // Redirecionar usuários autenticados apenas se já estiverem aprovados
   useEffect(() => {
     if (!authLoading && user && session && userDetails && userDetails.status === 'aprovado') {
-      console.log('Login page: Redirecionando usuário autenticado');
+      console.log('Login page: Redirecionando usuário autenticado aprovado');
       const from = location.state?.from?.pathname || getRedirectByRole(userDetails.role);
       navigate(from, { replace: true });
     }
@@ -105,7 +105,7 @@ export default function Login() {
         description: 'Você será redirecionado para a área apropriada.',
       });
 
-      // O redirecionamento será feito automaticamente pelo useEffect do AuthContext
+      // O redirecionamento será feito automaticamente pelo AuthContext
       
     } catch (error: any) {
       console.error('Login: Erro inesperado:', error);

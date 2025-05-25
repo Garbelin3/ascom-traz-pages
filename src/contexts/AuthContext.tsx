@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 type UserDetails = {
   id: string;
@@ -28,6 +29,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const getRedirectByRole = (role: string): string => {
+    switch (role) {
+      case 'admin':
+        return '/admin/dashboard';
+      case 'entregador':
+        return '/entregador/dashboard';
+      case 'comercio':
+        return '/comercio/dashboard';
+      default:
+        return '/';
+    }
+  };
 
   const fetchUserDetails = async (userId: string) => {
     try {
@@ -75,6 +90,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Buscar detalhes do usuário na nossa tabela personalizada
           const details = await fetchUserDetails(session.user.id);
           setUserDetails(details);
+
+          // Redirecionar automaticamente após login se o usuário está aprovado
+          if (event === 'SIGNED_IN' && details && details.status === 'aprovado') {
+            console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
+            const redirectPath = getRedirectByRole(details.role);
+            navigate(redirectPath, { replace: true });
+          }
         } else {
           console.log('AuthContext: Nenhuma sessão válida, limpando estado');
           setSession(null);
@@ -107,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const signOut = async () => {
     console.log('AuthContext: Fazendo logout...');
@@ -115,6 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserDetails(null);
     setSession(null);
     setUser(null);
+    navigate('/login');
   };
 
   const value = {
