@@ -57,7 +57,7 @@ const ComercioForm = () => {
       setIsLoading(true);
       console.log('ComercioForm: Iniciando cadastro com Supabase Auth...');
 
-      // 1. Criar usuário no Supabase Auth
+      // 1. Criar usuário no Supabase Auth com metadados
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -89,6 +89,9 @@ const ComercioForm = () => {
       }
 
       console.log('ComercioForm: Usuário criado com sucesso:', authData.user.id);
+
+      // Aguardar um pouco para garantir que o trigger foi executado
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 2. Inserir dados específicos do comércio
       const { error: comercioError } = await supabase
