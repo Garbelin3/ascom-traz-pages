@@ -9,7 +9,142 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      comercios: {
+        Row: {
+          cep: string
+          cidade: string
+          created_at: string | null
+          endereco: string
+          estado: string
+          id: string
+          nome_estabelecimento: string
+          nome_responsavel: string
+          status: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          tipo_negocio: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cep: string
+          cidade: string
+          created_at?: string | null
+          endereco: string
+          estado: string
+          id?: string
+          nome_estabelecimento: string
+          nome_responsavel: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          tipo_negocio: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cep?: string
+          cidade?: string
+          created_at?: string | null
+          endereco?: string
+          estado?: string
+          id?: string
+          nome_estabelecimento?: string
+          nome_responsavel?: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone?: string
+          tipo_negocio?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comercios_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entregadores: {
+        Row: {
+          cep: string
+          cidade: string
+          created_at: string | null
+          endereco: string
+          estado: string
+          id: string
+          nome: string
+          status: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          updated_at: string | null
+          user_id: string
+          veiculo: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Insert: {
+          cep: string
+          cidade: string
+          created_at?: string | null
+          endereco: string
+          estado: string
+          id?: string
+          nome: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          updated_at?: string | null
+          user_id: string
+          veiculo: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Update: {
+          cep?: string
+          cidade?: string
+          created_at?: string | null
+          endereco?: string
+          estado?: string
+          id?: string
+          nome?: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone?: string
+          updated_at?: string | null
+          user_id?: string
+          veiculo?: Database["public"]["Enums"]["vehicle_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entregadores_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: Database["public"]["Enums"]["approval_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["approval_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: Database["public"]["Enums"]["approval_status"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +153,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      approval_status: "pendente" | "aprovado" | "reprovado"
+      user_role: "admin" | "entregador" | "comercio"
+      vehicle_type: "moto" | "carro" | "bicicleta"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +270,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      approval_status: ["pendente", "aprovado", "reprovado"],
+      user_role: ["admin", "entregador", "comercio"],
+      vehicle_type: ["moto", "carro", "bicicleta"],
+    },
   },
 } as const

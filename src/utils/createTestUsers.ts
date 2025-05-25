@@ -7,8 +7,8 @@ export const createTestUsers = async () => {
 
     // 1. Criar usuário administrador
     const { data: adminAuth, error: adminAuthError } = await supabase.auth.signUp({
-      email: 'admin@teste.com',
-      password: 'senha123',
+      email: 'admin@codeprogram.com.br',
+      password: 'ascom2025@Admin',
       options: {
         data: {
           role: 'admin'

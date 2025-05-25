@@ -2,9 +2,15 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
-type UserDetails = Database['public']['Tables']['users']['Row'];
+type UserDetails = {
+  id: string;
+  email: string;
+  role: 'admin' | 'entregador' | 'comercio';
+  status: 'pendente' | 'aprovado' | 'reprovado';
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 type AuthContextType = {
   session: Session | null;
@@ -38,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       console.log('AuthContext: Detalhes do usuário encontrados:', data);
-      return data;
+      return data as UserDetails;
     } catch (error) {
       console.error('AuthContext: Erro ao buscar detalhes do usuário:', error);
       return null;
