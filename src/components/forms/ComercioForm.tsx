@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -90,14 +89,50 @@ const ComercioForm = () => {
 
       console.log('ComercioForm: Usuário criado com sucesso:', authData.user.id);
 
-      // Aguardar um pouco para garantir que o trigger foi executado
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // 2. Aguardar para garantir que o trigger foi executado
+      console.log('ComercioForm: Aguardando execução do trigger...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // 2. Inserir dados específicos do comércio
+      // 3. Fazer login para estabelecer uma sessão autenticada
+      console.log('ComercioForm: Fazendo login para estabelecer sessão...');
+      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+
+      if (loginError) {
+        console.error('ComercioForm: Erro ao fazer login após signup:', loginError);
+        toast({
+          title: 'Conta criada, mas erro no login',
+          description: 'Tente fazer login manualmente',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('ComercioForm: Login realizado com sucesso');
+
+      // 4. Verificar se temos uma sessão ativa
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        console.error('ComercioForm: Erro ao obter sessão:', sessionError);
+        toast({
+          title: 'Erro de sessão',
+          description: 'Não foi possível estabelecer uma sessão válida',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      console.log('ComercioForm: Sessão válida obtida, user_id:', sessionData.session.user.id);
+
+      // 5. Inserir dados específicos do comércio com usuário autenticado
+      console.log('ComercioForm: Inserindo dados do comércio...');
       const { error: comercioError } = await supabase
         .from('comercios')
         .insert({
-          user_id: authData.user.id,
+          user_id: sessionData.session.user.id,
           nome_estabelecimento: data.nome_estabelecimento,
           nome_responsavel: data.nome_responsavel,
           telefone: data.telefone,
@@ -110,9 +145,15 @@ const ComercioForm = () => {
 
       if (comercioError) {
         console.error('ComercioForm: Erro ao inserir dados do comércio:', comercioError);
+        console.error('ComercioForm: Detalhes do erro:', {
+          code: comercioError.code,
+          message: comercioError.message,
+          details: comercioError.details,
+          hint: comercioError.hint
+        });
         toast({
           title: 'Erro ao salvar dados',
-          description: 'Houve um problema ao salvar seus dados',
+          description: `Houve um problema ao salvar seus dados: ${comercioError.message}`,
           variant: 'destructive',
         });
         return;
