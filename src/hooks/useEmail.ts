@@ -36,7 +36,7 @@ export const useEmail = () => {
       console.log('Email sent successfully');
       toast({
         title: 'Email enviado!',
-        description: 'O email foi enviado com sucesso (modo de teste - verifique admin@codeprogram.com.br).',
+        description: 'O email foi enviado com sucesso.',
       });
     },
     onError: (error: Error) => {

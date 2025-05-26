@@ -179,7 +179,7 @@ const AdminDashboard: React.FC = () => {
             to: userEmail,
             subject: 'Conta Aprovada - ASCOM',
             html: emailTemplates.approved(userName, userRole, getDashboardUrl(userRole)),
-            from: 'ASCOM <noreply@resend.dev>', // Use verified domain
+            from: 'ASCOM <onboarding@resend.dev>',
           });
         } else if (newStatus === 'reprovado') {
           console.log('Enviando email de reprovação para:', userEmail);
@@ -187,13 +187,13 @@ const AdminDashboard: React.FC = () => {
             to: userEmail,
             subject: 'Cadastro Não Aprovado - ASCOM',
             html: emailTemplates.rejected(userName),
-            from: 'ASCOM <noreply@resend.dev>', // Use verified domain
+            from: 'ASCOM <onboarding@resend.dev>',
           });
         }
         
         toast({
           title: "Status atualizado",
-          description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso. Email de notificação será enviado.`,
+          description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso. Email de notificação enviado.`,
         });
       } catch (emailError) {
         console.error('Erro ao enviar email:', emailError);

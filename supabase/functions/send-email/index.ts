@@ -59,32 +59,16 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { to, subject, html, from }: EmailRequest = await req.json();
 
-    // For testing purposes, redirect all emails to the admin email
-    // This prevents the domain verification error
-    const adminEmail = "admin@codeprogram.com.br";
-    const actualTo = to; // Keep the original for logging
-    const testTo = adminEmail; // Use admin email for actual sending
+    // Use verified "from" address for Resend
+    const fromAddress = from || "ASCOM <onboarding@resend.dev>";
 
-    // Use a default verified domain from address
-    const fromAddress = from || "onboarding@resend.dev";
-
-    console.log(`Sending email (originally for: ${actualTo}, redirected to: ${testTo}) Subject: ${subject}, From: ${fromAddress}`);
-
-    // Modify the HTML to include original recipient info for testing
-    const modifiedHtml = `
-      <div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
-        <p><strong>🧪 EMAIL DE TESTE</strong></p>
-        <p>Este email seria enviado para: <strong>${actualTo}</strong></p>
-        <p>Assunto: ${subject}</p>
-      </div>
-      ${html}
-    `;
+    console.log(`Sending email to: ${to}, Subject: ${subject}, From: ${fromAddress}`);
 
     const emailResponse = await resend.emails.send({
       from: fromAddress,
-      to: [testTo],
-      subject: `[TESTE] ${subject}`,
-      html: modifiedHtml,
+      to: [to],
+      subject: subject,
+      html: html,
     });
 
     if (emailResponse.error) {
