@@ -59,20 +59,51 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { to, subject, html, from }: EmailRequest = await req.json();
 
-    // Use a default verified domain from address
-    const fromAddress = from || "ASCOM <noreply@resend.dev>";
+    // For testing purposes, redirect all emails to the admin email
+    // This prevents the domain verification error
+    const adminEmail = "admin@codeprogram.com.br";
+    const actualTo = to; // Keep the original for logging
+    const testTo = adminEmail; // Use admin email for actual sending
 
-    console.log('Sending email to:', to, 'Subject:', subject, 'From:', fromAddress);
+    // Use a default verified domain from address
+    const fromAddress = from || "onboarding@resend.dev";
+
+    console.log(`Sending email (originally for: ${actualTo}, redirected to: ${testTo}) Subject: ${subject}, From: ${fromAddress}`);
+
+    // Modify the HTML to include original recipient info for testing
+    const modifiedHtml = `
+      <div style="background: #f0f0f0; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+        <p><strong>🧪 EMAIL DE TESTE</strong></p>
+        <p>Este email seria enviado para: <strong>${actualTo}</strong></p>
+        <p>Assunto: ${subject}</p>
+      </div>
+      ${html}
+    `;
 
     const emailResponse = await resend.emails.send({
       from: fromAddress,
-      to: [to],
-      subject,
-      html,
+      to: [testTo],
+      subject: `[TESTE] ${subject}`,
+      html: modifiedHtml,
     });
 
     if (emailResponse.error) {
       console.error("Resend API error:", emailResponse.error);
+      
+      // Handle specific domain verification errors
+      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
+        return new Response(
+          JSON.stringify({ 
+            error: "Domain verification required. Please verify your domain at resend.com/domains or contact the administrator.",
+            details: emailResponse.error.message 
+          }),
+          {
+            status: 422,
+            headers: { "Content-Type": "application/json", ...corsHeaders },
+          }
+        );
+      }
+      
       throw new Error(`Email service error: ${emailResponse.error.message}`);
     }
 
@@ -88,20 +119,6 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-email function:", error);
     
-    // Check if it's a Resend validation error
-    if (error.message && error.message.includes('verify a domain')) {
-      return new Response(
-        JSON.stringify({ 
-          error: "Email domain not verified. Please verify your domain at resend.com/domains or use a verified email address.",
-          details: error.message 
-        }),
-        {
-          status: 422,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
-      );
-    }
-
     return new Response(
       JSON.stringify({ error: error.message || "Failed to send email" }),
       {

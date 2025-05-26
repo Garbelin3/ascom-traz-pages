@@ -36,7 +36,7 @@ export const useEmail = () => {
       console.log('Email sent successfully');
       toast({
         title: 'Email enviado!',
-        description: 'O email foi enviado com sucesso.',
+        description: 'O email foi enviado com sucesso (modo de teste - verifique admin@codeprogram.com.br).',
       });
     },
     onError: (error: Error) => {
@@ -46,7 +46,7 @@ export const useEmail = () => {
       let errorTitle = 'Erro ao enviar email';
       
       // Handle specific domain verification error
-      if (error.message.includes('verify a domain')) {
+      if (error.message.includes('verify a domain') || error.message.includes('Domain verification')) {
         errorTitle = 'Domínio não verificado';
         errorMessage = 'É necessário verificar o domínio no Resend. Entre em contato com o administrador.';
       }
