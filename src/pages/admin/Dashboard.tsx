@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,6 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from '@/components/ui/use-toast';
+import { useEmail } from '@/hooks/useEmail';
+import { emailTemplates } from '@/utils/emailTemplates';
 import { 
   Check, 
   X, 
@@ -52,6 +53,7 @@ const AdminDashboard: React.FC = () => {
   const [entregadores, setEntregadores] = useState<Entregador[]>([]);
   const [comercios, setComercio] = useState<Comercio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const sendEmail = useEmail();
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -93,6 +95,30 @@ const AdminDashboard: React.FC = () => {
 
   const handleStatusChange = async (id: string, table: 'entregadores' | 'comercios', newStatus: 'aprovado' | 'reprovado') => {
     try {
+      console.log(`Atualizando status para ${newStatus} - ID: ${id}, Tabela: ${table}`);
+
+      // Buscar dados do registro para obter user_id e informações do usuário
+      const { data: registro, error: fetchError } = await supabase
+        .from(table)
+        .select('user_id, nome, nome_estabelecimento, nome_responsavel')
+        .eq('id', id)
+        .single();
+
+      if (fetchError || !registro) {
+        throw fetchError || new Error('Registro não encontrado');
+      }
+
+      // Buscar dados do usuário para obter email e role
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email, role')
+        .eq('id', registro.user_id)
+        .single();
+
+      if (userError || !userData) {
+        throw userError || new Error('Usuário não encontrado');
+      }
+
       // Atualizar o status na tabela correspondente
       const { error: updateError } = await supabase
         .from(table)
@@ -101,26 +127,64 @@ const AdminDashboard: React.FC = () => {
 
       if (updateError) throw updateError;
 
-      // Buscar o user_id associado ao registro
-      const { data: registro, error: fetchError } = await supabase
-        .from(table)
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (fetchError || !registro) throw fetchError || new Error('Registro não encontrado');
-
       // Atualizar o status na tabela users
-      const { error: userError } = await supabase
+      const { error: userUpdateError } = await supabase
         .from('users')
         .update({ status: newStatus })
         .eq('id', registro.user_id);
 
-      if (userError) throw userError;
+      if (userUpdateError) throw userUpdateError;
+
+      // Preparar dados para o email
+      const userName = table === 'entregadores' ? registro.nome : registro.nome_responsavel;
+      const userRole = userData.role;
+      const userEmail = userData.email;
+
+      // Definir URL do dashboard baseado na role
+      const getDashboardUrl = (role: string) => {
+        const baseUrl = window.location.origin;
+        switch (role) {
+          case 'entregador':
+            return `${baseUrl}/entregador/dashboard`;
+          case 'comercio':
+            return `${baseUrl}/comercio/dashboard`;
+          case 'admin':
+            return `${baseUrl}/admin/dashboard`;
+          default:
+            return baseUrl;
+        }
+      };
+
+      // Enviar email baseado no status
+      try {
+        if (newStatus === 'aprovado') {
+          console.log('Enviando email de aprovação para:', userEmail);
+          sendEmail.mutate({
+            to: userEmail,
+            subject: 'Conta Aprovada - ASCOM',
+            html: emailTemplates.approved(userName, userRole, getDashboardUrl(userRole)),
+          });
+        } else if (newStatus === 'reprovado') {
+          console.log('Enviando email de reprovação para:', userEmail);
+          sendEmail.mutate({
+            to: userEmail,
+            subject: 'Cadastro Não Aprovado - ASCOM',
+            html: emailTemplates.rejected(userName),
+          });
+        }
+      } catch (emailError) {
+        console.error('Erro ao enviar email:', emailError);
+        // Não falha a operação se o email não for enviado
+        toast({
+          title: "Status atualizado",
+          description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso, mas houve erro no envio do email`,
+          variant: "default"
+        });
+      }
 
       toast({
         title: "Status atualizado",
-        description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso`,
+        description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso. Email de notificação enviado.`,
       });
 
       // Atualizar a lista
