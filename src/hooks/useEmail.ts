@@ -24,9 +24,16 @@ export const useEmail = () => {
         throw new Error(error.message || 'Erro ao enviar email');
       }
 
+      // Check if the response contains an error from the email service
+      if (data && data.error) {
+        console.error('Email service error:', data.error);
+        throw new Error(data.error || 'Erro do serviço de email');
+      }
+
       return data;
     },
     onSuccess: () => {
+      console.log('Email sent successfully');
       toast({
         title: 'Email enviado!',
         description: 'O email foi enviado com sucesso.',
@@ -34,9 +41,19 @@ export const useEmail = () => {
     },
     onError: (error: Error) => {
       console.error('Email mutation error:', error);
+      
+      let errorMessage = error.message || 'Ocorreu um erro ao enviar o email.';
+      let errorTitle = 'Erro ao enviar email';
+      
+      // Handle specific domain verification error
+      if (error.message.includes('verify a domain')) {
+        errorTitle = 'Domínio não verificado';
+        errorMessage = 'É necessário verificar o domínio no Resend. Entre em contato com o administrador.';
+      }
+      
       toast({
-        title: 'Erro ao enviar email',
-        description: error.message || 'Ocorreu um erro ao enviar o email.',
+        title: errorTitle,
+        description: errorMessage,
         variant: 'destructive',
       });
     },

@@ -57,16 +57,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, subject, html, from = "ASCOM <onboarding@resend.dev>" }: EmailRequest = await req.json();
+    const { to, subject, html, from }: EmailRequest = await req.json();
 
-    console.log('Sending email to:', to, 'Subject:', subject);
+    // Use a default verified domain from address
+    const fromAddress = from || "ASCOM <noreply@resend.dev>";
+
+    console.log('Sending email to:', to, 'Subject:', subject, 'From:', fromAddress);
 
     const emailResponse = await resend.emails.send({
-      from,
+      from: fromAddress,
       to: [to],
       subject,
       html,
     });
+
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      throw new Error(`Email service error: ${emailResponse.error.message}`);
+    }
 
     console.log("Email sent successfully:", emailResponse);
 
@@ -79,8 +87,23 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Error in send-email function:", error);
+    
+    // Check if it's a Resend validation error
+    if (error.message && error.message.includes('verify a domain')) {
+      return new Response(
+        JSON.stringify({ 
+          error: "Email domain not verified. Please verify your domain at resend.com/domains or use a verified email address.",
+          details: error.message 
+        }),
+        {
+          status: 422,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || "Failed to send email" }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
