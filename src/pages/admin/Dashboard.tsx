@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -97,12 +98,27 @@ const AdminDashboard: React.FC = () => {
     try {
       console.log(`Atualizando status para ${newStatus} - ID: ${id}, Tabela: ${table}`);
 
-      // Buscar dados do registro para obter user_id e informações do usuário
-      const { data: registro, error: fetchError } = await supabase
-        .from(table)
-        .select('user_id, nome, nome_estabelecimento, nome_responsavel')
-        .eq('id', id)
-        .single();
+      // Buscar dados do registro baseado na tabela específica
+      let registro: any;
+      let fetchError: any;
+
+      if (table === 'entregadores') {
+        const { data, error } = await supabase
+          .from('entregadores')
+          .select('user_id, nome')
+          .eq('id', id)
+          .single();
+        registro = data;
+        fetchError = error;
+      } else {
+        const { data, error } = await supabase
+          .from('comercios')
+          .select('user_id, nome_responsavel')
+          .eq('id', id)
+          .single();
+        registro = data;
+        fetchError = error;
+      }
 
       if (fetchError || !registro) {
         throw fetchError || new Error('Registro não encontrado');
