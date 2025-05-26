@@ -15,7 +15,10 @@ import {
   FileText,
   Users,
   Store,
-  RefreshCw
+  RefreshCw,
+  Mail,
+  Clock,
+  AlertCircle
 } from 'lucide-react';
 
 interface Entregador {
@@ -54,6 +57,7 @@ const AdminDashboard: React.FC = () => {
   const [entregadores, setEntregadores] = useState<Entregador[]>([]);
   const [comercios, setComercio] = useState<Comercio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [processingStatus, setProcessingStatus] = useState<{[key: string]: boolean}>({});
   const sendEmail = useEmail();
 
   const fetchData = async () => {
@@ -95,6 +99,9 @@ const AdminDashboard: React.FC = () => {
   }, []);
 
   const handleStatusChange = async (id: string, table: 'entregadores' | 'comercios', newStatus: 'aprovado' | 'reprovado') => {
+    const processingKey = `${table}-${id}`;
+    setProcessingStatus(prev => ({ ...prev, [processingKey]: true }));
+
     try {
       console.log(`Atualizando status para ${newStatus} - ID: ${id}, Tabela: ${table}`);
 
@@ -171,41 +178,49 @@ const AdminDashboard: React.FC = () => {
         }
       };
 
-      // Enviar email baseado no status
+      // Mostrar toast de status atualizado imediatamente
+      toast({
+        title: "Status atualizado",
+        description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso. Enviando email...`,
+      });
+
+      // Atualizar a lista imediatamente
+      await fetchData();
+
+      // Enviar email de forma assíncrona (não bloquear a interface)
       try {
         if (newStatus === 'aprovado') {
           console.log('Enviando email de aprovação para:', userEmail);
-          sendEmail.mutate({
+          await sendEmail.mutateAsync({
             to: userEmail,
             subject: 'Conta Aprovada - ASCOM',
             html: emailTemplates.approved(userName, userRole, getDashboardUrl(userRole)),
-            from: 'ASCOM <onboarding@resend.dev>',
+            from: 'ASCOM <noreply@ascom.com.br>',
+            isProduction: true,
           });
         } else if (newStatus === 'reprovado') {
           console.log('Enviando email de reprovação para:', userEmail);
-          sendEmail.mutate({
+          await sendEmail.mutateAsync({
             to: userEmail,
             subject: 'Cadastro Não Aprovado - ASCOM',
-            html: emailTemplates.rejected(userName),
-            from: 'ASCOM <onboarding@resend.dev>',
+            html: emailTemplates.rejected(userName, 'Documentos ou informações precisam ser revisados'),
+            from: 'ASCOM <noreply@ascom.com.br>',
+            isProduction: true,
           });
         }
         
-        toast({
-          title: "Status atualizado",
-          description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso. Email de notificação enviado.`,
-        });
+        console.log('Email enviado com sucesso');
       } catch (emailError) {
-        console.error('Erro ao enviar email:', emailError);
+        console.error('Erro específico no envio de email:', emailError);
+        
+        // Toast específico para erro de email (não sobrescreve o sucesso do status)
         toast({
-          title: "Status atualizado",
-          description: `Cadastro ${newStatus === 'aprovado' ? 'aprovado' : 'reprovado'} com sucesso, mas houve erro no envio do email`,
+          title: "Email não enviado",
+          description: "O status foi atualizado, mas houve problema no envio do email. Verifique a configuração do Resend.",
           variant: "default"
         });
       }
 
-      // Atualizar a lista
-      fetchData();
     } catch (error: any) {
       console.error('Erro ao atualizar status:', error);
       toast({
@@ -213,140 +228,223 @@ const AdminDashboard: React.FC = () => {
         description: error.message || "Ocorreu um erro ao atualizar o status",
         variant: "destructive"
       });
+    } finally {
+      setProcessingStatus(prev => ({ ...prev, [processingKey]: false }));
     }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusConfig = {
+      aprovado: { 
+        bg: 'bg-green-100', 
+        text: 'text-green-800', 
+        label: 'Aprovado',
+        icon: <Check size={12} className="mr-1" />
+      },
+      reprovado: { 
+        bg: 'bg-red-100', 
+        text: 'text-red-800', 
+        label: 'Reprovado',
+        icon: <X size={12} className="mr-1" />
+      },
+      pendente: { 
+        bg: 'bg-yellow-100', 
+        text: 'text-yellow-800', 
+        label: 'Pendente',
+        icon: <Clock size={12} className="mr-1" />
+      }
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pendente;
+    
+    return (
+      <span className={`inline-flex items-center px-2 py-1 text-xs rounded-full ${config.bg} ${config.text}`}>
+        {config.icon}
+        {config.label}
+      </span>
+    );
+  };
+
+  const ActionButtons = ({ 
+    id, 
+    table, 
+    currentStatus 
+  }: { 
+    id: string, 
+    table: 'entregadores' | 'comercios', 
+    currentStatus: string 
+  }) => {
+    const processingKey = `${table}-${id}`;
+    const isProcessing = processingStatus[processingKey];
+
+    return (
+      <div className="flex justify-center gap-2">
+        {currentStatus !== 'aprovado' && (
+          <Button 
+            onClick={() => handleStatusChange(id, table, 'aprovado')}
+            size="sm"
+            variant="outline"
+            disabled={isProcessing}
+            className="bg-green-50 border-green-200 hover:bg-green-100 disabled:opacity-50"
+          >
+            {isProcessing ? (
+              <div className="w-4 h-4 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Check size={16} className="text-green-600" />
+            )}
+          </Button>
+        )}
+        {currentStatus !== 'reprovado' && (
+          <Button
+            onClick={() => handleStatusChange(id, table, 'reprovado')}
+            size="sm"
+            variant="outline"
+            disabled={isProcessing}
+            className="bg-red-50 border-red-200 hover:bg-red-100 disabled:opacity-50"
+          >
+            {isProcessing ? (
+              <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <X size={16} className="text-red-600" />
+            )}
+          </Button>
+        )}
+      </div>
+    );
   };
 
   return (
     <AdminLayout>
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">Painel Administrativo</h1>
-          <Button onClick={fetchData} variant="outline" className="flex items-center gap-2">
-            <RefreshCw size={16} />
+          <div>
+            <h1 className="text-3xl font-bold">Painel Administrativo</h1>
+            <p className="text-gray-600 mt-1">Gerencie aprovações de cadastros</p>
+          </div>
+          <Button onClick={fetchData} variant="outline" className="flex items-center gap-2" disabled={isLoading}>
+            <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             Atualizar
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total de Entregadores</CardTitle>
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Users className="h-4 w-4 text-blue-600 mr-2" />
+                Total de Entregadores
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center">
-                <Users className="h-5 w-5 text-gray-600 mr-2" />
-                <p className="text-2xl font-bold">{entregadores.length}</p>
-              </div>
+              <p className="text-2xl font-bold text-blue-600">{entregadores.length}</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Total de Comércios</CardTitle>
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Store className="h-4 w-4 text-purple-600 mr-2" />
+                Total de Comércios
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center">
-                <Store className="h-5 w-5 text-gray-600 mr-2" />
-                <p className="text-2xl font-bold">{comercios.length}</p>
-              </div>
+              <p className="text-2xl font-bold text-purple-600">{comercios.length}</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Cadastros Pendentes</CardTitle>
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Clock className="h-4 w-4 text-yellow-600 mr-2" />
+                Pendentes
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center">
-                <FileText className="h-5 w-5 text-gray-600 mr-2" />
-                <p className="text-2xl font-bold">
-                  {entregadores.filter(e => e.status === 'pendente').length + 
-                   comercios.filter(c => c.status === 'pendente').length}
-                </p>
-              </div>
+              <p className="text-2xl font-bold text-yellow-600">
+                {entregadores.filter(e => e.status === 'pendente').length + 
+                 comercios.filter(c => c.status === 'pendente').length}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center">
+                <Check className="h-4 w-4 text-green-600 mr-2" />
+                Aprovados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-2xl font-bold text-green-600">
+                {entregadores.filter(e => e.status === 'aprovado').length + 
+                 comercios.filter(c => c.status === 'aprovado').length}
+              </p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="entregadores" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="entregadores">Entregadores</TabsTrigger>
-            <TabsTrigger value="comercios">Comércios</TabsTrigger>
+            <TabsTrigger value="entregadores" className="flex items-center gap-2">
+              <Users size={16} />
+              Entregadores
+            </TabsTrigger>
+            <TabsTrigger value="comercios" className="flex items-center gap-2">
+              <Store size={16} />
+              Comércios
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="entregadores">
             <Card>
               <CardHeader>
-                <CardTitle>Lista de Entregadores</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users size={20} />
+                  Lista de Entregadores
+                  <span className="text-sm font-normal text-gray-500">
+                    ({entregadores.length} total)
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="flex justify-center p-4">
+                  <div className="flex justify-center p-8">
                     <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-ascom rounded-full"></div>
                   </div>
                 ) : entregadores.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4">Nenhum entregador cadastrado</p>
+                  <div className="text-center py-8">
+                    <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500">Nenhum entregador cadastrado</p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b">
-                          <th className="px-4 py-2 text-left">Nome</th>
-                          <th className="px-4 py-2 text-left">Telefone</th>
-                          <th className="px-4 py-2 text-left">Cidade</th>
-                          <th className="px-4 py-2 text-left">Veículo</th>
-                          <th className="px-4 py-2 text-left">Status</th>
-                          <th className="px-4 py-2 text-center">Ações</th>
+                        <tr className="border-b bg-gray-50">
+                          <th className="px-4 py-3 text-left font-medium">Nome</th>
+                          <th className="px-4 py-3 text-left font-medium">Telefone</th>
+                          <th className="px-4 py-3 text-left font-medium">Cidade</th>
+                          <th className="px-4 py-3 text-left font-medium">Veículo</th>
+                          <th className="px-4 py-3 text-left font-medium">Status</th>
+                          <th className="px-4 py-3 text-center font-medium">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {entregadores.map((entregador) => (
-                          <tr key={entregador.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2">{entregador.nome}</td>
-                            <td className="px-4 py-2">{entregador.telefone}</td>
-                            <td className="px-4 py-2">{entregador.cidade}</td>
-                            <td className="px-4 py-2 capitalize">{entregador.veiculo}</td>
-                            <td className="px-4 py-2">
-                              <span 
-                                className={`inline-block px-2 py-1 text-xs rounded-full ${
-                                  entregador.status === 'aprovado' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : entregador.status === 'reprovado'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}
-                              >
-                                {entregador.status === 'aprovado' 
-                                  ? 'Aprovado' 
-                                  : entregador.status === 'reprovado'
-                                  ? 'Reprovado'
-                                  : 'Pendente'
-                                }
-                              </span>
+                          <tr key={entregador.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 font-medium">{entregador.nome}</td>
+                            <td className="px-4 py-3">{entregador.telefone}</td>
+                            <td className="px-4 py-3">{entregador.cidade}</td>
+                            <td className="px-4 py-3 capitalize">{entregador.veiculo}</td>
+                            <td className="px-4 py-3">
+                              {getStatusBadge(entregador.status)}
                             </td>
-                            <td className="px-4 py-2">
-                              <div className="flex justify-center gap-2">
-                                {entregador.status !== 'aprovado' && (
-                                  <Button 
-                                    onClick={() => handleStatusChange(entregador.id, 'entregadores', 'aprovado')}
-                                    size="sm"
-                                    variant="outline"
-                                    className="bg-green-50 border-green-200 hover:bg-green-100"
-                                  >
-                                    <Check size={16} className="text-green-600" />
-                                  </Button>
-                                )}
-                                {entregador.status !== 'reprovado' && (
-                                  <Button
-                                    onClick={() => handleStatusChange(entregador.id, 'entregadores', 'reprovado')}
-                                    size="sm"
-                                    variant="outline"
-                                    className="bg-red-50 border-red-200 hover:bg-red-100"
-                                  >
-                                    <X size={16} className="text-red-600" />
-                                  </Button>
-                                )}
-                              </div>
+                            <td className="px-4 py-3">
+                              <ActionButtons 
+                                id={entregador.id}
+                                table="entregadores"
+                                currentStatus={entregador.status}
+                              />
                             </td>
                           </tr>
                         ))}
@@ -361,76 +459,53 @@ const AdminDashboard: React.FC = () => {
           <TabsContent value="comercios">
             <Card>
               <CardHeader>
-                <CardTitle>Lista de Comércios</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Store size={20} />
+                  Lista de Comércios
+                  <span className="text-sm font-normal text-gray-500">
+                    ({comercios.length} total)
+                  </span>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
-                  <div className="flex justify-center p-4">
+                  <div className="flex justify-center p-8">
                     <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-ascom rounded-full"></div>
                   </div>
                 ) : comercios.length === 0 ? (
-                  <p className="text-center text-gray-500 py-4">Nenhum comércio cadastrado</p>
+                  <div className="text-center py-8">
+                    <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
+                    <p className="text-gray-500">Nenhum comércio cadastrado</p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b">
-                          <th className="px-4 py-2 text-left">Nome</th>
-                          <th className="px-4 py-2 text-left">Responsável</th>
-                          <th className="px-4 py-2 text-left">Telefone</th>
-                          <th className="px-4 py-2 text-left">Tipo</th>
-                          <th className="px-4 py-2 text-left">Status</th>
-                          <th className="px-4 py-2 text-center">Ações</th>
+                        <tr className="border-b bg-gray-50">
+                          <th className="px-4 py-3 text-left font-medium">Nome</th>
+                          <th className="px-4 py-3 text-left font-medium">Responsável</th>
+                          <th className="px-4 py-3 text-left font-medium">Telefone</th>
+                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-3 text-left font-medium">Status</th>
+                          <th className="px-4 py-3 text-center font-medium">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {comercios.map((comercio) => (
-                          <tr key={comercio.id} className="border-b hover:bg-gray-50">
-                            <td className="px-4 py-2">{comercio.nome_estabelecimento}</td>
-                            <td className="px-4 py-2">{comercio.nome_responsavel}</td>
-                            <td className="px-4 py-2">{comercio.telefone}</td>
-                            <td className="px-4 py-2">{comercio.tipo_negocio}</td>
-                            <td className="px-4 py-2">
-                              <span 
-                                className={`inline-block px-2 py-1 text-xs rounded-full ${
-                                  comercio.status === 'aprovado' 
-                                    ? 'bg-green-100 text-green-800' 
-                                    : comercio.status === 'reprovado'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-yellow-100 text-yellow-800'
-                                }`}
-                              >
-                                {comercio.status === 'aprovado' 
-                                  ? 'Aprovado' 
-                                  : comercio.status === 'reprovado'
-                                  ? 'Reprovado'
-                                  : 'Pendente'
-                                }
-                              </span>
+                          <tr key={comercio.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 font-medium">{comercio.nome_estabelecimento}</td>
+                            <td className="px-4 py-3">{comercio.nome_responsavel}</td>
+                            <td className="px-4 py-3">{comercio.telefone}</td>
+                            <td className="px-4 py-3">{comercio.tipo_negocio}</td>
+                            <td className="px-4 py-3">
+                              {getStatusBadge(comercio.status)}
                             </td>
-                            <td className="px-4 py-2">
-                              <div className="flex justify-center gap-2">
-                                {comercio.status !== 'aprovado' && (
-                                  <Button 
-                                    onClick={() => handleStatusChange(comercio.id, 'comercios', 'aprovado')}
-                                    size="sm"
-                                    variant="outline"
-                                    className="bg-green-50 border-green-200 hover:bg-green-100"
-                                  >
-                                    <Check size={16} className="text-green-600" />
-                                  </Button>
-                                )}
-                                {comercio.status !== 'reprovado' && (
-                                  <Button
-                                    onClick={() => handleStatusChange(comercio.id, 'comercios', 'reprovado')}
-                                    size="sm"
-                                    variant="outline"
-                                    className="bg-red-50 border-red-200 hover:bg-red-100"
-                                  >
-                                    <X size={16} className="text-red-600" />
-                                  </Button>
-                                )}
-                              </div>
+                            <td className="px-4 py-3">
+                              <ActionButtons 
+                                id={comercio.id}
+                                table="comercios"
+                                currentStatus={comercio.status}
+                              />
                             </td>
                           </tr>
                         ))}

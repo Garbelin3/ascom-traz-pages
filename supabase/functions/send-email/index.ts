@@ -16,6 +16,7 @@ interface EmailRequest {
   subject: string;
   html: string;
   from?: string;
+  isProduction?: boolean;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -57,29 +58,85 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, subject, html, from }: EmailRequest = await req.json();
+    const { to, subject, html, from, isProduction }: EmailRequest = await req.json();
 
-    // Use verified "from" address for Resend
-    const fromAddress = from || "ASCOM <onboarding@resend.dev>";
+    // Environment configuration
+    const environment = Deno.env.get("ENVIRONMENT") || "development";
+    const isProductionEnv = environment === "production" || isProduction;
+    
+    // Configure sender address based on environment
+    let fromAddress: string;
+    let finalRecipient: string;
+    let finalHtml = html;
+    
+    if (isProductionEnv) {
+      // Production: use verified domain
+      fromAddress = from || "ASCOM <noreply@ascom.com.br>";
+      finalRecipient = to;
+      console.log(`[PRODUCTION] Sending email to: ${to}, Subject: ${subject}`);
+    } else {
+      // Development: send to verified test address with original recipient info
+      fromAddress = "ASCOM <onboarding@resend.dev>";
+      finalRecipient = "admin@codeprogram.com.br"; // Verified test address
+      
+      // Add development notice to email content
+      finalHtml = `
+        <div style="background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin-bottom: 20px; border-radius: 8px; font-family: Arial, sans-serif;">
+          <h3 style="color: #92400e; margin: 0 0 10px 0;">🚧 EMAIL DE DESENVOLVIMENTO</h3>
+          <p style="color: #92400e; margin: 0; font-size: 14px;">
+            <strong>Destinatário Original:</strong> ${to}<br>
+            <strong>Ambiente:</strong> Desenvolvimento<br>
+            <strong>Este email seria enviado para o usuário em produção</strong>
+          </p>
+        </div>
+        ${html}
+      `;
+      
+      console.log(`[DEVELOPMENT] Redirecting email from ${to} to ${finalRecipient}, Subject: ${subject}`);
+    }
 
-    console.log(`Sending email to: ${to}, Subject: ${subject}, From: ${fromAddress}`);
+    // Send email with retry logic
+    let emailResponse;
+    let retryCount = 0;
+    const maxRetries = 3;
 
-    const emailResponse = await resend.emails.send({
-      from: fromAddress,
-      to: [to],
-      subject: subject,
-      html: html,
-    });
+    while (retryCount < maxRetries) {
+      try {
+        emailResponse = await resend.emails.send({
+          from: fromAddress,
+          to: [finalRecipient],
+          subject: isProductionEnv ? subject : `[DEV] ${subject}`,
+          html: finalHtml,
+        });
 
+        if (emailResponse.error) {
+          throw new Error(`Resend API error: ${emailResponse.error.message}`);
+        }
+
+        break; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        console.error(`Email send attempt ${retryCount} failed:`, error);
+        
+        if (retryCount >= maxRetries) {
+          throw error;
+        }
+        
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+
+    // Handle specific domain verification errors
     if (emailResponse.error) {
       console.error("Resend API error:", emailResponse.error);
       
-      // Handle specific domain verification errors
       if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
         return new Response(
           JSON.stringify({ 
             error: "Domain verification required. Please verify your domain at resend.com/domains or contact the administrator.",
-            details: emailResponse.error.message 
+            details: emailResponse.error.message,
+            code: "DOMAIN_NOT_VERIFIED"
           }),
           {
             status: 422,
@@ -91,9 +148,27 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Email service error: ${emailResponse.error.message}`);
     }
 
-    console.log("Email sent successfully:", emailResponse);
+    // Log successful send
+    const logData = {
+      environment,
+      originalRecipient: to,
+      finalRecipient,
+      subject,
+      emailId: emailResponse.data?.id,
+      timestamp: new Date().toISOString(),
+      retryCount
+    };
+    
+    console.log("Email sent successfully:", logData);
 
-    return new Response(JSON.stringify(emailResponse), {
+    return new Response(JSON.stringify({
+      success: true,
+      data: emailResponse.data,
+      environment,
+      originalRecipient: to,
+      finalRecipient,
+      retryCount
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -103,8 +178,16 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("Error in send-email function:", error);
     
+    // Structured error response
+    const errorResponse = {
+      error: error.message || "Failed to send email",
+      code: error.code || "UNKNOWN_ERROR",
+      timestamp: new Date().toISOString(),
+      environment: Deno.env.get("ENVIRONMENT") || "development"
+    };
+    
     return new Response(
-      JSON.stringify({ error: error.message || "Failed to send email" }),
+      JSON.stringify(errorResponse),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

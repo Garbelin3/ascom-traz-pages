@@ -8,35 +8,69 @@ interface EmailData {
   subject: string;
   html: string;
   from?: string;
+  isProduction?: boolean;
+}
+
+interface EmailResponse {
+  success: boolean;
+  data?: any;
+  environment: string;
+  originalRecipient: string;
+  finalRecipient: string;
+  retryCount: number;
+}
+
+interface EmailError {
+  error: string;
+  code?: string;
+  timestamp: string;
+  environment: string;
 }
 
 export const useEmail = () => {
   return useMutation({
-    mutationFn: async (emailData: EmailData) => {
+    mutationFn: async (emailData: EmailData): Promise<EmailResponse> => {
       console.log('Sending email:', emailData);
       
       const { data, error } = await supabase.functions.invoke('send-email', {
-        body: emailData,
+        body: {
+          ...emailData,
+          isProduction: true // Configurar para produção
+        },
       });
 
       if (error) {
-        console.error('Email error:', error);
-        throw new Error(error.message || 'Erro ao enviar email');
+        console.error('Supabase function error:', error);
+        throw new Error(error.message || 'Erro ao chamar função de email');
       }
 
       // Check if the response contains an error from the email service
       if (data && data.error) {
-        console.error('Email service error:', data.error);
-        throw new Error(data.error || 'Erro do serviço de email');
+        console.error('Email service error:', data);
+        const emailError = data as EmailError;
+        
+        // Handle specific error codes
+        if (emailError.code === 'DOMAIN_NOT_VERIFIED') {
+          throw new Error('Domínio não verificado no Resend. Configure um domínio próprio para envio em produção.');
+        }
+        
+        throw new Error(emailError.error || 'Erro do serviço de email');
       }
 
-      return data;
+      console.log('Email sent successfully:', data);
+      return data as EmailResponse;
     },
-    onSuccess: () => {
-      console.log('Email sent successfully');
+    onSuccess: (data: EmailResponse) => {
+      console.log('Email mutation success:', data);
+      
+      const isDevEnvironment = data.environment === 'development';
+      const successMessage = isDevEnvironment 
+        ? `Email enviado para teste (${data.finalRecipient}). Em produção seria enviado para ${data.originalRecipient}.`
+        : 'O email foi enviado com sucesso.';
+      
       toast({
         title: 'Email enviado!',
-        description: 'O email foi enviado com sucesso.',
+        description: successMessage,
       });
     },
     onError: (error: Error) => {
@@ -46,9 +80,15 @@ export const useEmail = () => {
       let errorTitle = 'Erro ao enviar email';
       
       // Handle specific domain verification error
-      if (error.message.includes('verify a domain') || error.message.includes('Domain verification')) {
-        errorTitle = 'Domínio não verificado';
-        errorMessage = 'É necessário verificar o domínio no Resend. Entre em contato com o administrador.';
+      if (error.message.includes('verify a domain') || error.message.includes('Domain verification') || error.message.includes('Domínio não verificado')) {
+        errorTitle = 'Configuração de Produção Necessária';
+        errorMessage = 'Para envio em produção, é necessário configurar um domínio próprio no Resend. Entre em contato com o administrador.';
+      }
+      
+      // Handle retry information
+      if (error.message.includes('retry')) {
+        errorTitle = 'Falha Temporária';
+        errorMessage = 'Houve uma falha temporária no envio. Tente novamente em alguns minutos.';
       }
       
       toast({
