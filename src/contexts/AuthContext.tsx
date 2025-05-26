@@ -92,10 +92,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserDetails(details);
 
           // Redirecionar automaticamente após login se o usuário está aprovado
-          if (event === 'SIGNED_IN' && details && details.status === 'aprovado') {
-            console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
-            const redirectPath = getRedirectByRole(details.role);
-            navigate(redirectPath, { replace: true });
+          if (event === 'SIGNED_IN' && details) {
+            console.log('AuthContext: Usuário logado com status:', details.status);
+            if (details.status === 'aprovado') {
+              console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
+              const redirectPath = getRedirectByRole(details.role);
+              navigate(redirectPath, { replace: true });
+            } else {
+              console.log('AuthContext: Usuário não aprovado, permanecendo na página atual');
+              // Se não aprovado, pode redirecionar para uma página de status ou permanecer onde está
+            }
           }
         } else {
           console.log('AuthContext: Nenhuma sessão válida, limpando estado');
@@ -119,11 +125,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         const details = await fetchUserDetails(session.user.id);
         setUserDetails(details);
+        
+        // Se já está logado e aprovado, redirecionar para o dashboard apropriado
+        if (details && details.status === 'aprovado') {
+          const currentPath = window.location.pathname;
+          const expectedPath = getRedirectByRole(details.role);
+          
+          // Se não está na rota correta, redirecionar
+          if (currentPath === '/' || currentPath === '/login') {
+            console.log('AuthContext: Redirecionando usuário já logado para:', expectedPath);
+            navigate(expectedPath, { replace: true });
+          }
+        }
       }
       
-      if (!session) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     });
 
     return () => {

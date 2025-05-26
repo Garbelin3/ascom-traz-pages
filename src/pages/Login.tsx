@@ -51,10 +51,16 @@ export default function Login() {
   
   // Redirecionar usuários autenticados apenas se já estiverem aprovados
   useEffect(() => {
-    if (!authLoading && user && session && userDetails && userDetails.status === 'aprovado') {
-      console.log('Login page: Redirecionando usuário autenticado aprovado');
-      const from = location.state?.from?.pathname || getRedirectByRole(userDetails.role);
-      navigate(from, { replace: true });
+    if (!authLoading && user && session && userDetails) {
+      console.log('Login page: Usuário já autenticado detectado');
+      if (userDetails.status === 'aprovado') {
+        console.log('Login page: Redirecionando usuário autenticado aprovado');
+        const redirectPath = getRedirectByRole(userDetails.role);
+        navigate(redirectPath, { replace: true });
+      } else {
+        console.log('Login page: Usuário autenticado mas não aprovado');
+        // Usuário logado mas não aprovado - pode mostrar uma mensagem ou permanecer aqui
+      }
     }
   }, [user, session, userDetails, authLoading, navigate, location]);
 
@@ -99,7 +105,7 @@ export default function Login() {
         return;
       }
 
-      console.log('Login: Autenticação bem-sucedida');
+      console.log('Login: Autenticação bem-sucedida, aguardando redirecionamento...');
       toast({
         title: 'Login realizado com sucesso!',
         description: 'Você será redirecionado para a área apropriada.',
