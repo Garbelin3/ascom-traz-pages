@@ -73,7 +73,7 @@ const ModernNavBar = () => {
                 rotate: [0, -5, 5, 0]
               }} transition={{
                 duration: 0.5
-              }} className="" />
+              }} className="h-20" />
                 <div className="hidden sm:block">
                   
                   
