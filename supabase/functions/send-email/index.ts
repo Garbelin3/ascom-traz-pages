@@ -60,6 +60,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { to, subject, html, isProduction }: EmailRequest = await req.json();
 
+    // Validar dados obrigatórios
+    if (!to || !subject || !html) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: to, subject, html' }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Environment configuration
     const environment = Deno.env.get("ENVIRONMENT") || "development";
     const isProductionEnv = environment === "production" || isProduction;
@@ -93,6 +104,21 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`[DEVELOPMENT] Redirecting email from ${to} to ${finalRecipient}, Subject: ${subject}`);
     }
 
+    // Verificar se a chave API do Resend está configurada
+    if (!Deno.env.get("RESEND_API_KEY")) {
+      console.error('RESEND_API_KEY not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'Email service not configured. Please contact administrator.',
+          code: 'RESEND_API_KEY_MISSING'
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
+
     // Send email with retry logic
     let emailResponse;
     let retryCount = 0;
@@ -100,6 +126,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     while (retryCount < maxRetries) {
       try {
+        console.log(`Attempt ${retryCount + 1}: Sending email from ${fromAddress} to ${finalRecipient}`);
+        
         emailResponse = await resend.emails.send({
           from: fromAddress,
           to: [finalRecipient],
@@ -107,43 +135,47 @@ const handler = async (req: Request): Promise<Response> => {
           html: finalHtml,
         });
 
+        console.log('Resend response:', emailResponse);
+
+        // Verificar se há erro na resposta
         if (emailResponse.error) {
           throw new Error(`Resend API error: ${emailResponse.error.message}`);
         }
 
-        break; // Success, exit retry loop
+        // Verificar se os dados estão presentes (sucesso)
+        if (emailResponse.data && emailResponse.data.id) {
+          console.log(`Email sent successfully with ID: ${emailResponse.data.id}`);
+          break; // Success, exit retry loop
+        } else {
+          throw new Error('Invalid response from Resend API');
+        }
+
       } catch (error) {
         retryCount++;
         console.error(`Email send attempt ${retryCount} failed:`, error);
         
         if (retryCount >= maxRetries) {
+          // Handle specific domain verification errors
+          if (error.message && error.message.includes('domain is not verified')) {
+            return new Response(
+              JSON.stringify({ 
+                error: "Domínio não verificado no Resend. Configure um domínio próprio para envio em produção.",
+                details: error.message,
+                code: "DOMAIN_NOT_VERIFIED"
+              }),
+              {
+                status: 422,
+                headers: { "Content-Type": "application/json", ...corsHeaders },
+              }
+            );
+          }
+          
           throw error;
         }
         
         // Wait before retry (exponential backoff)
         await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
       }
-    }
-
-    // Handle specific domain verification errors
-    if (emailResponse.error) {
-      console.error("Resend API error:", emailResponse.error);
-      
-      if (emailResponse.error.message && emailResponse.error.message.includes('verify a domain')) {
-        return new Response(
-          JSON.stringify({ 
-            error: "Domain verification required. Please verify your domain at resend.com/domains or contact the administrator.",
-            details: emailResponse.error.message,
-            code: "DOMAIN_NOT_VERIFIED"
-          }),
-          {
-            status: 422,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          }
-        );
-      }
-      
-      throw new Error(`Email service error: ${emailResponse.error.message}`);
     }
 
     // Log successful send
