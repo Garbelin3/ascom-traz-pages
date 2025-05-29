@@ -58,26 +58,24 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { to, subject, html, from, isProduction }: EmailRequest = await req.json();
+    const { to, subject, html, isProduction }: EmailRequest = await req.json();
 
     // Environment configuration
     const environment = Deno.env.get("ENVIRONMENT") || "development";
     const isProductionEnv = environment === "production" || isProduction;
     
-    // Configure sender address based on environment
-    let fromAddress: string;
+    // Configure sender address - always use verified email
+    const fromAddress = "ASCOM <admin@codeprogram.com.br>";
     let finalRecipient: string;
     let finalHtml = html;
     
     if (isProductionEnv) {
-      // Production: use verified domain
-      fromAddress = from || "ASCOM <noreply@ascom.com.br>";
+      // Production: send to actual recipient
       finalRecipient = to;
       console.log(`[PRODUCTION] Sending email to: ${to}, Subject: ${subject}`);
     } else {
-      // Development: send to verified test address with original recipient info
-      fromAddress = "ASCOM <onboarding@resend.dev>";
-      finalRecipient = "admin@codeprogram.com.br"; // Verified test address
+      // Development: send to admin email with original recipient info
+      finalRecipient = "admin@codeprogram.com.br";
       
       // Add development notice to email content
       finalHtml = `

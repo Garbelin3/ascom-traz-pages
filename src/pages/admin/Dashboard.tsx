@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -195,7 +194,6 @@ const AdminDashboard: React.FC = () => {
             to: userEmail,
             subject: 'Conta Aprovada - ASCOM',
             html: emailTemplates.approved(userName, userRole, getDashboardUrl(userRole)),
-            from: 'ASCOM <noreply@ascom.com.br>',
             isProduction: true,
           });
         } else if (newStatus === 'reprovado') {
@@ -204,7 +202,6 @@ const AdminDashboard: React.FC = () => {
             to: userEmail,
             subject: 'Cadastro Não Aprovado - ASCOM',
             html: emailTemplates.rejected(userName, 'Documentos ou informações precisam ser revisados'),
-            from: 'ASCOM <noreply@ascom.com.br>',
             isProduction: true,
           });
         }
