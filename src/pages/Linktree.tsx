@@ -40,7 +40,7 @@ const Linktree = () => {
     { 
       title: "Site Oficial", 
       icon: <Globe className="w-5 h-5 mr-2" />, 
-      url: "https://ascomtrazcomunidade.com.br", 
+      url: "https://ascomtrazcomunidde.com.br", 
       color: "bg-ascom hover:bg-ascom-dark"
     },
   ];
