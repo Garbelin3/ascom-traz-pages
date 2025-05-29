@@ -1,0 +1,260 @@
+
+/* Modern CSS Utilities */
+
+/* Glassmorphism Components */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Neumorphism Components */
+.neuro {
+  background: linear-gradient(145deg, var(--neuro-light), var(--neuro-dark));
+  box-shadow: var(--neuro-shadow-1), var(--neuro-shadow-2);
+  border-radius: var(--radius-2xl);
+}
+
+.neuro-inset {
+  background: linear-gradient(145deg, var(--neuro-dark), var(--neuro-light));
+  box-shadow: inset var(--neuro-shadow-1), inset var(--neuro-shadow-2);
+}
+
+/* Modern Button Styles */
+.btn-modern {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  transition: all var(--duration-200) var(--ease-out);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.btn-modern::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: left var(--duration-500) var(--ease-out);
+}
+
+.btn-modern:hover::before {
+  left: 100%;
+}
+
+.btn-modern:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-modern:active {
+  transform: translateY(0);
+  transition-duration: var(--duration-75);
+}
+
+/* Interactive Cards */
+.card-interactive {
+  position: relative;
+  transition: all var(--duration-300) var(--ease-out);
+  transform: translateZ(0);
+  will-change: transform;
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-2xl);
+}
+
+.card-interactive:active {
+  transform: translateY(-4px) scale(1.01);
+  transition-duration: var(--duration-100);
+}
+
+/* Floating Labels */
+.floating-label {
+  position: relative;
+  margin-bottom: var(--space-6);
+}
+
+.floating-label input,
+.floating-label textarea,
+.floating-label select {
+  width: 100%;
+  padding: var(--space-4) var(--space-3) var(--space-2);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  font-size: var(--text-base);
+  transition: all var(--duration-200) var(--ease-out);
+  outline: none;
+}
+
+.floating-label label {
+  position: absolute;
+  left: var(--space-3);
+  top: var(--space-4);
+  font-size: var(--text-base);
+  color: var(--gray-500);
+  transition: all var(--duration-200) var(--ease-out);
+  pointer-events: none;
+  background: white;
+  padding: 0 var(--space-1);
+}
+
+.floating-label input:focus,
+.floating-label textarea:focus,
+.floating-label select:focus,
+.floating-label input:not(:placeholder-shown),
+.floating-label textarea:not(:placeholder-shown),
+.floating-label select:not([value=""]) {
+  border-color: var(--ascom-500);
+  box-shadow: 0 0 0 3px var(--ascom-100);
+}
+
+.floating-label input:focus + label,
+.floating-label textarea:focus + label,
+.floating-label select:focus + label,
+.floating-label input:not(:placeholder-shown) + label,
+.floating-label textarea:not(:placeholder-shown) + label,
+.floating-label select:not([value=""]) + label {
+  top: -8px;
+  font-size: var(--text-sm);
+  color: var(--ascom-600);
+  font-weight: 500;
+}
+
+/* Loading Skeletons */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--gray-200) 25%,
+    var(--gray-100) 50%,
+    var(--gray-200) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Scroll Improvements */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ascom-300) var(--gray-100);
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--ascom-300);
+  border-radius: var(--radius-full);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--ascom-500);
+}
+
+/* Focus Styles for Accessibility */
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  transition: outline-color var(--duration-150) var(--ease-out);
+}
+
+.focus-ring:focus-visible {
+  outline-color: var(--ascom-500);
+  outline-offset: 2px;
+}
+
+/* Touch Targets */
+.touch-target {
+  min-height: 48px;
+  min-width: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Safe Area Support */
+.safe-area-top {
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+}
+
+.safe-area-bottom {
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+
+.safe-area-left {
+  padding-left: max(var(--space-4), env(safe-area-inset-left));
+}
+
+.safe-area-right {
+  padding-right: max(var(--space-4), env(safe-area-inset-right));
+}
+
+/* Grid Systems */
+.grid-auto-fit {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+
+.grid-auto-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-8);
+}
+
+/* Container Queries Support */
+@container (min-width: 400px) {
+  .container-responsive {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+}
+
+@container (min-width: 600px) {
+  .container-responsive {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}

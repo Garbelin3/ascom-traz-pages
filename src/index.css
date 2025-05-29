@@ -1,5 +1,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Nunito+Sans:wght@300;400;500;600;700&display=swap');
+@import './design-system/tokens.css';
+@import './design-system/utilities.css';
 
 @tailwind base;
 @tailwind components;
@@ -94,33 +96,38 @@
 
   html {
     scroll-behavior: smooth;
+    font-size: 16px;
   }
 
   body {
     @apply bg-background text-foreground font-nunito;
     margin: 0;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-inter font-bold;
     letter-spacing: -0.025em;
+    line-height: 1.2;
   }
 
   h1 {
-    @apply text-3xl md:text-4xl lg:text-5xl xl:text-6xl;
+    font-size: clamp(var(--text-2xl), 5vw, var(--text-6xl));
   }
 
   h2 {
-    @apply text-2xl md:text-3xl lg:text-4xl;
+    font-size: clamp(var(--text-xl), 4vw, var(--text-4xl));
   }
 
   h3 {
-    @apply text-xl md:text-2xl lg:text-3xl;
+    font-size: clamp(var(--text-lg), 3vw, var(--text-3xl));
   }
 
   p {
     @apply leading-relaxed;
+    line-height: 1.7;
   }
 
   a {
@@ -132,55 +139,165 @@
     height: auto;
   }
 
+  /* Container with safe area support */
   .ascom-container {
     @apply container mx-auto px-4 sm:px-6 lg:px-8;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
   }
 
+  /* Enhanced button styles */
   .btn-primary {
-    @apply bg-ascom px-6 py-3 rounded-full text-white font-medium hover:bg-ascom-dark transition-all duration-300 shadow-lg transform hover:-translate-y-1 flex items-center justify-center;
+    @apply bg-gradient-to-r from-ascom to-ascom-light px-8 py-4 rounded-2xl text-white font-semibold;
+    @apply hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+    @apply flex items-center justify-center space-x-2;
+    @apply focus-ring touch-target;
   }
 
   .btn-secondary {
-    @apply bg-white px-6 py-3 rounded-full text-ascom border-2 border-ascom font-medium hover:bg-gray-50 transition-all duration-300 shadow-sm transform hover:-translate-y-1 flex items-center justify-center;
+    @apply bg-white px-8 py-4 rounded-2xl text-ascom border-2 border-ascom font-semibold;
+    @apply hover:bg-ascom hover:text-white transition-all duration-300 transform hover:-translate-y-1;
+    @apply flex items-center justify-center space-x-2;
+    @apply focus-ring touch-target;
   }
 
+  /* Enhanced section styles */
   .section-title {
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-gray-800 tracking-tight;
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-gray-800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 
   .section-subtitle {
-    @apply text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto;
+    @apply text-lg md:text-xl text-gray-600 mb-12 max-w-4xl mx-auto leading-relaxed;
   }
 
+  /* Modern card styles */
   .benefit-card {
-    @apply p-6 rounded-xl border border-gray-100 bg-white shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2;
+    @apply card-interactive p-8 rounded-3xl border border-gray-100;
+    @apply bg-white shadow-lg hover:shadow-2xl;
   }
 
-  /* Card with gradient border */
-  .gradient-border {
-    position: relative;
-    border-radius: 1rem;
-    background: linear-gradient(white, white) padding-box,
-                linear-gradient(135deg, #0FA0CE, #33C3F0) border-box;
-    border: 3px solid transparent;
+  /* Progress indicators */
+  .progress-ring {
+    transform: rotate(-90deg);
   }
 
-  /* Glassmorphism effect */
-  .glass {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  .progress-ring-circle {
+    transition: stroke-dasharray 0.35s;
+    transform-origin: 50% 50%;
   }
 
-  /* Custom animations */
-  .hover-scale {
-    @apply transition-transform duration-300 hover:scale-105;
+  /* Loading animations */
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
   }
-  
-  .fade-in {
-    animation: fadeIn 0.6s ease-in;
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 25%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
   }
-  
-  @keyframes fadeIn {
-    0% { opacity: 0; transform: translateY(10px); }
-    100% { opacity: 1; transform: translateY(0); }
+
+  /* Custom scrollbar for webkit browsers */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: var(--radius-full);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--ascom-300);
+    border-radius: var(--radius-full);
+    transition: background var(--duration-200) var(--ease-out);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--ascom-500);
+  }
+
+  /* High contrast support */
+  @media (prefers-contrast: high) {
+    .glass {
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid var(--ascom-500);
+    }
+  }
+
+  /* Print styles */
+  @media print {
+    .glass,
+    .neuro {
+      background: white !important;
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+    }
+    
+    .btn-modern,
+    .card-interactive {
+      break-inside: avoid;
+    }
+  }
+}
+
+/* Component-specific animations */
+@layer components {
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(1deg); }
+  }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* Page transition animations */
+  .page-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
+  }
+
+  .page-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-exit-active {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 300ms ease-out, transform 300ms ease-out;
   }
 }
