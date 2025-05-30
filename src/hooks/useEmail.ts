@@ -15,8 +15,7 @@ interface EmailResponse {
   success: boolean;
   data?: any;
   environment: string;
-  originalRecipient: string;
-  finalRecipient: string;
+  recipient: string;
   retryCount: number;
 }
 
@@ -34,8 +33,9 @@ export const useEmail = () => {
       
       const { data, error } = await supabase.functions.invoke('send-email', {
         body: {
-          ...emailData,
-          isProduction: true // Configurar para produção
+          to: emailData.to,
+          subject: emailData.subject,
+          html: emailData.html,
         },
       });
 
@@ -51,7 +51,7 @@ export const useEmail = () => {
         
         // Handle specific error codes
         if (emailError.code === 'DOMAIN_NOT_VERIFIED') {
-          throw new Error('Domínio não verificado no Resend. Configure um domínio próprio para envio em produção.');
+          throw new Error('Domínio não verificado no Resend. Verifique se ascomtrazcomunidde.com.br está configurado corretamente.');
         }
         
         throw new Error(emailError.error || 'Erro do serviço de email');
@@ -63,14 +63,9 @@ export const useEmail = () => {
     onSuccess: (data: EmailResponse) => {
       console.log('Email mutation success:', data);
       
-      const isDevEnvironment = data.environment === 'development';
-      const successMessage = isDevEnvironment 
-        ? `Email enviado para teste (${data.finalRecipient}). Em produção seria enviado para ${data.originalRecipient}.`
-        : 'O email foi enviado com sucesso.';
-      
       toast({
-        title: 'Email enviado!',
-        description: successMessage,
+        title: 'Email enviado com sucesso!',
+        description: `O email foi enviado para ${data.recipient}.`,
       });
     },
     onError: (error: Error) => {
@@ -81,8 +76,8 @@ export const useEmail = () => {
       
       // Handle specific domain verification error
       if (error.message.includes('verify a domain') || error.message.includes('Domain verification') || error.message.includes('Domínio não verificado')) {
-        errorTitle = 'Configuração de Produção Necessária';
-        errorMessage = 'Para envio em produção, é necessário configurar um domínio próprio no Resend. Entre em contato com o administrador.';
+        errorTitle = 'Configuração de Domínio';
+        errorMessage = 'Verifique se o domínio ascomtrazcomunidde.com.br está configurado e verificado no Resend.';
       }
       
       // Handle retry information
