@@ -1,33 +1,24 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { 
-  User, 
-  LogOut, 
-  Home,
-  LayoutDashboard,
-  Users,
-  Settings,
-  Store
-} from 'lucide-react';
-
+import { User, LogOut, Home, LayoutDashboard, Users, Settings, Store } from 'lucide-react';
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
-
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { signOut, userDetails } = useAuth();
+const AdminLayout: React.FC<AdminLayoutProps> = ({
+  children
+}) => {
+  const {
+    signOut,
+    userDetails
+  } = useAuth();
   const navigate = useNavigate();
-
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
   };
-
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
+  return <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar para desktop */}
       <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col">
         <div className="p-4 border-b border-gray-800">
@@ -47,16 +38,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               </Link>
             </li>
             <li>
-              <Link to="/admin/entregadores" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-800">
-                <Users size={18} />
-                <span>Entregadores</span>
-              </Link>
+              
             </li>
             <li>
-              <Link to="/admin/comercios" className="flex items-center gap-3 p-2 rounded-md hover:bg-gray-800">
-                <Store size={18} />
-                <span>Comércios</span>
-              </Link>
+              
             </li>
           </ul>
         </nav>
@@ -71,11 +56,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <p className="text-xs text-gray-400">{userDetails?.email}</p>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            className="w-full flex items-center justify-center gap-2 text-white hover:bg-gray-800" 
-            onClick={handleLogout}
-          >
+          <Button variant="ghost" className="w-full flex items-center justify-center gap-2 text-white hover:bg-gray-800" onClick={handleLogout}>
             <LogOut size={16} />
             <span>Sair</span>
           </Button>
@@ -98,8 +79,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <main className="flex-1 overflow-auto">
         {children}
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default AdminLayout;
