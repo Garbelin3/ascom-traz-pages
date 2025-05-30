@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasInitialized, setHasInitialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const navigate = useNavigate();
 
   const getRedirectByRole = (role: string): string => {
@@ -74,31 +74,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const handleAuthStateChange = async (event: string, session: Session | null) => {
-    console.log('AuthContext: Auth event:', event, 'Session válida:', !!session);
+  const updateAuthState = async (newSession: Session | null, skipRedirect = false) => {
+    console.log('AuthContext: Atualizando estado de auth - Sessão válida:', !!newSession);
     
-    setSession(session);
-    setUser(session?.user ?? null);
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
     
-    if (session?.user) {
+    if (newSession?.user) {
       console.log('AuthContext: Usuário logado, buscando detalhes...');
-      const details = await fetchUserDetails(session.user.id);
+      const details = await fetchUserDetails(newSession.user.id);
       setUserDetails(details);
 
-      // Só redireciona automaticamente no evento SIGNED_IN (não em TOKEN_REFRESHED ou outros)
-      if (event === 'SIGNED_IN' && details && details.status === 'aprovado') {
-        console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
-        const redirectPath = getRedirectByRole(details.role);
-        navigate(redirectPath, { replace: true });
+      // Só redireciona se não for para pular o redirecionamento e se o usuário estiver aprovado
+      if (!skipRedirect && details && details.status === 'aprovado') {
+        const currentPath = window.location.pathname;
+        const expectedPath = getRedirectByRole(details.role);
+        
+        // Só redireciona se estiver em páginas de login ou página inicial
+        if (currentPath === '/' || currentPath === '/login') {
+          console.log('AuthContext: Redirecionando usuário aprovado para:', expectedPath);
+          navigate(expectedPath, { replace: true });
+        }
       }
     } else {
       console.log('AuthContext: Nenhuma sessão válida, limpando estado');
       setUserDetails(null);
     }
+  };
+
+  const handleAuthStateChange = async (event: string, newSession: Session | null) => {
+    console.log('AuthContext: Auth event:', event, 'Session válida:', !!newSession);
     
-    // Só marca como carregamento finalizado após a primeira inicialização
-    if (!hasInitialized) {
-      setHasInitialized(true);
+    // Para eventos de refresh de token, não fazer redirecionamento
+    const skipRedirect = event === 'TOKEN_REFRESHED';
+    
+    await updateAuthState(newSession, skipRedirect);
+    
+    // Marca como inicializado após o primeiro evento processado
+    if (!isInitialized) {
+      console.log('AuthContext: Primeira inicialização completa');
+      setIsInitialized(true);
       setIsLoading(false);
     }
   };
@@ -107,19 +122,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('AuthContext: Inicializando autenticação...');
     let mounted = true;
 
-    // Configurar o listener primeiro
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    // Verificar sessão existente apenas uma vez na inicialização
     const initializeAuth = async () => {
       try {
+        // Configurar o listener primeiro
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+        // Verificar sessão existente
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('AuthContext: Erro ao obter sessão:', error);
           if (mounted) {
             setIsLoading(false);
-            setHasInitialized(true);
+            setIsInitialized(true);
           }
           return;
         }
@@ -127,57 +142,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('AuthContext: Verificando sessão existente:', !!session);
         
         if (mounted) {
-          if (session?.user) {
-            console.log('AuthContext: Sessão existente encontrada');
-            setSession(session);
-            setUser(session.user);
-            
-            const details = await fetchUserDetails(session.user.id);
-            setUserDetails(details);
-            
-            // Para usuários já logados, só redireciona se estiver em páginas específicas
-            if (details && details.status === 'aprovado') {
-              const currentPath = window.location.pathname;
-              const expectedPath = getRedirectByRole(details.role);
-              
-              if (currentPath === '/' || currentPath === '/login') {
-                console.log('AuthContext: Redirecionando usuário já logado para:', expectedPath);
-                navigate(expectedPath, { replace: true });
-              }
-            }
-          } else {
-            console.log('AuthContext: Nenhuma sessão existente');
+          // Se há uma sessão existente, processa ela sem redirecionamento automático
+          if (session) {
+            console.log('AuthContext: Sessão persistida encontrada');
+            await updateAuthState(session, true); // skipRedirect = true para sessões persistidas
           }
           
+          setIsInitialized(true);
           setIsLoading(false);
-          setHasInitialized(true);
         }
+
+        // Cleanup
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error('AuthContext: Erro na inicialização:', error);
         if (mounted) {
           setIsLoading(false);
-          setHasInitialized(true);
+          setIsInitialized(true);
         }
       }
     };
 
     initializeAuth();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
   }, [navigate]);
 
   const signOut = async () => {
     console.log('AuthContext: Fazendo logout...');
     setIsLoading(true);
-    await supabase.auth.signOut();
-    setUserDetails(null);
-    setSession(null);
-    setUser(null);
-    setIsLoading(false);
-    navigate('/login');
+    
+    try {
+      await supabase.auth.signOut();
+      setUserDetails(null);
+      setSession(null);
+      setUser(null);
+      navigate('/login');
+    } catch (error) {
+      console.error('AuthContext: Erro no logout:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const value = {
