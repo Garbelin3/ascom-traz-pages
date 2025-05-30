@@ -29,6 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
   const navigate = useNavigate();
 
   const getRedirectByRole = (role: string): string => {
@@ -73,86 +74,109 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const handleAuthStateChange = async (event: string, session: Session | null) => {
+    console.log('AuthContext: Auth event:', event, 'Session válida:', !!session);
+    
+    setSession(session);
+    setUser(session?.user ?? null);
+    
+    if (session?.user) {
+      console.log('AuthContext: Usuário logado, buscando detalhes...');
+      const details = await fetchUserDetails(session.user.id);
+      setUserDetails(details);
+
+      // Só redireciona automaticamente no evento SIGNED_IN (não em TOKEN_REFRESHED ou outros)
+      if (event === 'SIGNED_IN' && details && details.status === 'aprovado') {
+        console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
+        const redirectPath = getRedirectByRole(details.role);
+        navigate(redirectPath, { replace: true });
+      }
+    } else {
+      console.log('AuthContext: Nenhuma sessão válida, limpando estado');
+      setUserDetails(null);
+    }
+    
+    // Só marca como carregamento finalizado após a primeira inicialização
+    if (!hasInitialized) {
+      setHasInitialized(true);
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     console.log('AuthContext: Inicializando autenticação...');
-    setIsLoading(true);
+    let mounted = true;
 
-    // Configurar o listener de mudança de estado de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('AuthContext: Auth event:', event, 'Session válida:', !!session);
+    // Configurar o listener primeiro
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
+
+    // Verificar sessão existente apenas uma vez na inicialização
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (session && session.user) {
-          console.log('AuthContext: Sessão válida encontrada, buscando detalhes do usuário...');
-          setSession(session);
-          setUser(session.user);
-          
-          // Buscar detalhes do usuário na nossa tabela personalizada
-          const details = await fetchUserDetails(session.user.id);
-          setUserDetails(details);
+        if (error) {
+          console.error('AuthContext: Erro ao obter sessão:', error);
+          if (mounted) {
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
+          return;
+        }
 
-          // Redirecionar automaticamente após login se o usuário está aprovado
-          if (event === 'SIGNED_IN' && details) {
-            console.log('AuthContext: Usuário logado com status:', details.status);
-            if (details.status === 'aprovado') {
-              console.log('AuthContext: Redirecionando usuário aprovado para:', getRedirectByRole(details.role));
-              const redirectPath = getRedirectByRole(details.role);
-              navigate(redirectPath, { replace: true });
-            } else {
-              console.log('AuthContext: Usuário não aprovado, permanecendo na página atual');
-              // Se não aprovado, pode redirecionar para uma página de status ou permanecer onde está
+        console.log('AuthContext: Verificando sessão existente:', !!session);
+        
+        if (mounted) {
+          if (session?.user) {
+            console.log('AuthContext: Sessão existente encontrada');
+            setSession(session);
+            setUser(session.user);
+            
+            const details = await fetchUserDetails(session.user.id);
+            setUserDetails(details);
+            
+            // Para usuários já logados, só redireciona se estiver em páginas específicas
+            if (details && details.status === 'aprovado') {
+              const currentPath = window.location.pathname;
+              const expectedPath = getRedirectByRole(details.role);
+              
+              if (currentPath === '/' || currentPath === '/login') {
+                console.log('AuthContext: Redirecionando usuário já logado para:', expectedPath);
+                navigate(expectedPath, { replace: true });
+              }
             }
+          } else {
+            console.log('AuthContext: Nenhuma sessão existente');
           }
-        } else {
-          console.log('AuthContext: Nenhuma sessão válida, limpando estado');
-          setSession(null);
-          setUser(null);
-          setUserDetails(null);
-        }
-        
-        setIsLoading(false);
-      }
-    );
-
-    // Verificar sessão existente
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('AuthContext: Verificando sessão existente:', !!session);
-      
-      if (session && session.user) {
-        console.log('AuthContext: Sessão existente encontrada');
-        setSession(session);
-        setUser(session.user);
-        
-        const details = await fetchUserDetails(session.user.id);
-        setUserDetails(details);
-        
-        // Se já está logado e aprovado, redirecionar para o dashboard apropriado
-        if (details && details.status === 'aprovado') {
-          const currentPath = window.location.pathname;
-          const expectedPath = getRedirectByRole(details.role);
           
-          // Se não está na rota correta, redirecionar
-          if (currentPath === '/' || currentPath === '/login') {
-            console.log('AuthContext: Redirecionando usuário já logado para:', expectedPath);
-            navigate(expectedPath, { replace: true });
-          }
+          setIsLoading(false);
+          setHasInitialized(true);
+        }
+      } catch (error) {
+        console.error('AuthContext: Erro na inicialização:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setHasInitialized(true);
         }
       }
-      
-      setIsLoading(false);
-    });
+    };
+
+    initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [navigate]);
 
   const signOut = async () => {
     console.log('AuthContext: Fazendo logout...');
+    setIsLoading(true);
     await supabase.auth.signOut();
     setUserDetails(null);
     setSession(null);
     setUser(null);
+    setIsLoading(false);
     navigate('/login');
   };
 
