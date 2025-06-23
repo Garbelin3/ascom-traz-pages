@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,40 +12,41 @@ import { emailTemplates } from '@/utils/emailTemplates';
 import { 
   Check, 
   X, 
-  FileText,
   Users,
-  Store,
+  Car,
   RefreshCw,
-  Mail,
   Clock,
   AlertCircle
 } from 'lucide-react';
 
-interface Entregador {
+interface Motorista {
   id: string;
-  nome: string;
+  nome_completo: string;
   telefone: string;
   endereco: string;
   cidade: string;
   estado: string;
   cep: string;
   veiculo: string;
+  cnh: string;
+  modelo_veiculo: string;
+  placa_veiculo: string;
+  cor_veiculo: string;
+  ano_veiculo: number;
   status: string;
   created_at: string;
   user_id: string;
   updated_at: string;
 }
 
-interface Comercio {
+interface Passageiro {
   id: string;
-  nome_estabelecimento: string;
-  nome_responsavel: string;
+  nome_completo: string;
   telefone: string;
-  endereco: string;
+  endereco_favorito: string | null;
   cidade: string;
   estado: string;
   cep: string;
-  tipo_negocio: string;
   status: string;
   created_at: string;
   user_id: string;
@@ -53,8 +55,8 @@ interface Comercio {
 
 const AdminDashboard: React.FC = () => {
   const { userDetails } = useAuth();
-  const [entregadores, setEntregadores] = useState<Entregador[]>([]);
-  const [comercios, setComercio] = useState<Comercio[]>([]);
+  const [motoristas, setMotoristas] = useState<Motorista[]>([]);
+  const [passageiros, setPassageiros] = useState<Passageiro[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingStatus, setProcessingStatus] = useState<{[key: string]: boolean}>({});
   const sendEmail = useEmail();
@@ -63,24 +65,24 @@ const AdminDashboard: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Buscar entregadores
-      const { data: entregadoresData, error: entregadoresError } = await supabase
-        .from('entregadores')
+      // Buscar motoristas
+      const { data: motoristasData, error: motoristasError } = await supabase
+        .from('motoristas')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (entregadoresError) throw entregadoresError;
+      if (motoristasError) throw motoristasError;
       
-      // Buscar comércios
-      const { data: comerciosData, error: comerciosError } = await supabase
-        .from('comercios')
+      // Buscar passageiros
+      const { data: passageirosData, error: passageirosError } = await supabase
+        .from('passageiros')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (comerciosError) throw comerciosError;
+      if (passageirosError) throw passageirosError;
 
-      setEntregadores(entregadoresData || []);
-      setComercio(comerciosData || []);
+      setMotoristas(motoristasData || []);
+      setPassageiros(passageirosData || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({
@@ -97,7 +99,7 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleStatusChange = async (id: string, table: 'entregadores' | 'comercios', newStatus: 'aprovado' | 'reprovado') => {
+  const handleStatusChange = async (id: string, table: 'motoristas' | 'passageiros', newStatus: 'aprovado' | 'reprovado') => {
     const processingKey = `${table}-${id}`;
     setProcessingStatus(prev => ({ ...prev, [processingKey]: true }));
 
@@ -108,18 +110,18 @@ const AdminDashboard: React.FC = () => {
       let registro: any;
       let fetchError: any;
 
-      if (table === 'entregadores') {
+      if (table === 'motoristas') {
         const { data, error } = await supabase
-          .from('entregadores')
-          .select('user_id, nome')
+          .from('motoristas')
+          .select('user_id, nome_completo')
           .eq('id', id)
           .single();
         registro = data;
         fetchError = error;
       } else {
         const { data, error } = await supabase
-          .from('comercios')
-          .select('user_id, nome_responsavel')
+          .from('passageiros')
+          .select('user_id, nome_completo')
           .eq('id', id)
           .single();
         registro = data;
@@ -158,7 +160,7 @@ const AdminDashboard: React.FC = () => {
       if (userUpdateError) throw userUpdateError;
 
       // Preparar dados para o email
-      const userName = table === 'entregadores' ? registro.nome : registro.nome_responsavel;
+      const userName = registro.nome_completo;
       const userRole = userData.role;
       const userEmail = userData.email;
 
@@ -166,10 +168,10 @@ const AdminDashboard: React.FC = () => {
       const getDashboardUrl = (role: string) => {
         const baseUrl = window.location.origin;
         switch (role) {
-          case 'entregador':
-            return `${baseUrl}/entregador/dashboard`;
-          case 'comercio':
-            return `${baseUrl}/comercio/dashboard`;
+          case 'motorista':
+            return `${baseUrl}/motorista/dashboard`;
+          case 'passageiro':
+            return `${baseUrl}/passageiro/dashboard`;
           case 'admin':
             return `${baseUrl}/admin/dashboard`;
           default:
@@ -268,7 +270,7 @@ const AdminDashboard: React.FC = () => {
     currentStatus 
   }: { 
     id: string, 
-    table: 'entregadores' | 'comercios', 
+    table: 'motoristas' | 'passageiros', 
     currentStatus: string 
   }) => {
     const processingKey = `${table}-${id}`;
@@ -328,24 +330,24 @@ const AdminDashboard: React.FC = () => {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center">
-                <Users className="h-4 w-4 text-blue-600 mr-2" />
-                Total de Entregadores
+                <Car className="h-4 w-4 text-blue-600 mr-2" />
+                Total de Motoristas
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-blue-600">{entregadores.length}</p>
+              <p className="text-2xl font-bold text-blue-600">{motoristas.length}</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center">
-                <Store className="h-4 w-4 text-purple-600 mr-2" />
-                Total de Comércios
+                <Users className="h-4 w-4 text-purple-600 mr-2" />
+                Total de Passageiros
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-bold text-purple-600">{comercios.length}</p>
+              <p className="text-2xl font-bold text-purple-600">{passageiros.length}</p>
             </CardContent>
           </Card>
           
@@ -358,8 +360,8 @@ const AdminDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-yellow-600">
-                {entregadores.filter(e => e.status === 'pendente').length + 
-                 comercios.filter(c => c.status === 'pendente').length}
+                {motoristas.filter(e => e.status === 'pendente').length + 
+                 passageiros.filter(c => c.status === 'pendente').length}
               </p>
             </CardContent>
           </Card>
@@ -373,33 +375,33 @@ const AdminDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-green-600">
-                {entregadores.filter(e => e.status === 'aprovado').length + 
-                 comercios.filter(c => c.status === 'aprovado').length}
+                {motoristas.filter(e => e.status === 'aprovado').length + 
+                 passageiros.filter(c => c.status === 'aprovado').length}
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="entregadores" className="w-full">
+        <Tabs defaultValue="motoristas" className="w-full">
           <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="entregadores" className="flex items-center gap-2">
-              <Users size={16} />
-              Entregadores
+            <TabsTrigger value="motoristas" className="flex items-center gap-2">
+              <Car size={16} />
+              Motoristas
             </TabsTrigger>
-            <TabsTrigger value="comercios" className="flex items-center gap-2">
-              <Store size={16} />
-              Comércios
+            <TabsTrigger value="passageiros" className="flex items-center gap-2">
+              <Users size={16} />
+              Passageiros
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="entregadores">
+          <TabsContent value="motoristas">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users size={20} />
-                  Lista de Entregadores
+                  <Car size={20} />
+                  Lista de Motoristas
                   <span className="text-sm font-normal text-gray-500">
-                    ({entregadores.length} total)
+                    ({motoristas.length} total)
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -408,10 +410,10 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex justify-center p-8">
                     <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-ascom rounded-full"></div>
                   </div>
-                ) : entregadores.length === 0 ? (
+                ) : motoristas.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">Nenhum entregador cadastrado</p>
+                    <p className="text-gray-500">Nenhum motorista cadastrado</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -427,20 +429,20 @@ const AdminDashboard: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {entregadores.map((entregador) => (
-                          <tr key={entregador.id} className="border-b hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 font-medium">{entregador.nome}</td>
-                            <td className="px-4 py-3">{entregador.telefone}</td>
-                            <td className="px-4 py-3">{entregador.cidade}</td>
-                            <td className="px-4 py-3 capitalize">{entregador.veiculo}</td>
+                        {motoristas.map((motorista) => (
+                          <tr key={motorista.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 font-medium">{motorista.nome_completo}</td>
+                            <td className="px-4 py-3">{motorista.telefone}</td>
+                            <td className="px-4 py-3">{motorista.cidade}</td>
+                            <td className="px-4 py-3 capitalize">{motorista.veiculo}</td>
                             <td className="px-4 py-3">
-                              {getStatusBadge(entregador.status)}
+                              {getStatusBadge(motorista.status)}
                             </td>
                             <td className="px-4 py-3">
                               <ActionButtons 
-                                id={entregador.id}
-                                table="entregadores"
-                                currentStatus={entregador.status}
+                                id={motorista.id}
+                                table="motoristas"
+                                currentStatus={motorista.status}
                               />
                             </td>
                           </tr>
@@ -453,14 +455,14 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="comercios">
+          <TabsContent value="passageiros">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Store size={20} />
-                  Lista de Comércios
+                  <Users size={20} />
+                  Lista de Passageiros
                   <span className="text-sm font-normal text-gray-500">
-                    ({comercios.length} total)
+                    ({passageiros.length} total)
                   </span>
                 </CardTitle>
               </CardHeader>
@@ -469,10 +471,10 @@ const AdminDashboard: React.FC = () => {
                   <div className="flex justify-center p-8">
                     <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-ascom rounded-full"></div>
                   </div>
-                ) : comercios.length === 0 ? (
+                ) : passageiros.length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle size={48} className="mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">Nenhum comércio cadastrado</p>
+                    <p className="text-gray-500">Nenhum passageiro cadastrado</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
@@ -480,28 +482,26 @@ const AdminDashboard: React.FC = () => {
                       <thead>
                         <tr className="border-b bg-gray-50">
                           <th className="px-4 py-3 text-left font-medium">Nome</th>
-                          <th className="px-4 py-3 text-left font-medium">Responsável</th>
                           <th className="px-4 py-3 text-left font-medium">Telefone</th>
-                          <th className="px-4 py-3 text-left font-medium">Tipo</th>
+                          <th className="px-4 py-3 text-left font-medium">Cidade</th>
                           <th className="px-4 py-3 text-left font-medium">Status</th>
                           <th className="px-4 py-3 text-center font-medium">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {comercios.map((comercio) => (
-                          <tr key={comercio.id} className="border-b hover:bg-gray-50 transition-colors">
-                            <td className="px-4 py-3 font-medium">{comercio.nome_estabelecimento}</td>
-                            <td className="px-4 py-3">{comercio.nome_responsavel}</td>
-                            <td className="px-4 py-3">{comercio.telefone}</td>
-                            <td className="px-4 py-3">{comercio.tipo_negocio}</td>
+                        {passageiros.map((passageiro) => (
+                          <tr key={passageiro.id} className="border-b hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-3 font-medium">{passageiro.nome_completo}</td>
+                            <td className="px-4 py-3">{passageiro.telefone}</td>
+                            <td className="px-4 py-3">{passageiro.cidade}</td>
                             <td className="px-4 py-3">
-                              {getStatusBadge(comercio.status)}
+                              {getStatusBadge(passageiro.status)}
                             </td>
                             <td className="px-4 py-3">
                               <ActionButtons 
-                                id={comercio.id}
-                                table="comercios"
-                                currentStatus={comercio.status}
+                                id={passageiro.id}
+                                table="passageiros"
+                                currentStatus={passageiro.status}
                               />
                             </td>
                           </tr>

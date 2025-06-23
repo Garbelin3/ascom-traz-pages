@@ -1,9 +1,10 @@
+
 export const emailTemplates = {
   welcome: (userName: string) => `
     <div style="font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
       <div style="background-color: #007bff; color: white; padding: 30px 20px; text-align: center;">
         <h1 style="margin: 0; font-size: 28px; font-weight: bold;">Bem-vindo à ASCOM</h1>
-        <p style="margin: 5px 0 0; font-size: 16px;">Plataforma de Gestão de Entregas</p>
+        <p style="margin: 5px 0 0; font-size: 16px;">Plataforma de Transporte</p>
       </div>
       <div style="padding: 30px 20px; color: #333333; line-height: 1.6;">
         <h2 style="font-size: 22px; color: #007bff; margin-top: 0; margin-bottom: 20px;">Olá, ${userName}!</h2>
@@ -31,7 +32,7 @@ export const emailTemplates = {
         </div>
         <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px; text-align: center; color: #777777;">
           <p style="font-size: 14px; margin: 0 0 10px 0;">
-            <strong>ASCOM</strong> - Conectando Comércios e Entregadores
+            <strong>ASCOM</strong> - Conectando Pessoas
           </p>
           <p style="font-size: 12px; margin: 0;">
             Este é um e-mail automático. Não é necessário respondê-lo.
@@ -71,7 +72,7 @@ export const emailTemplates = {
         </p>
         <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px; text-align: center; color: #777777;">
           <p style="font-size: 14px; margin: 0 0 10px 0;">
-            <strong>ASCOM</strong> - Conectando Comércios e Entregadores
+            <strong>ASCOM</strong> - Conectando Pessoas
           </p>
           <p style="font-size: 12px; margin: 0;">
             Precisa de ajuda? Entre em contato com nosso suporte.
@@ -113,7 +114,7 @@ export const emailTemplates = {
         </p>
         <div style="border-top: 1px solid #e0e0e0; padding-top: 20px; margin-top: 30px; text-align: center; color: #777777;">
           <p style="font-size: 14px; margin: 0 0 10px 0;">
-            <strong>ASCOM</strong> - Conectando Comércios e Entregadores
+            <strong>ASCOM</strong> - Conectando Pessoas
           </p>
           <p style="font-size: 12px; margin: 0;">
             Nossa equipe está sempre disponível para ajudar.

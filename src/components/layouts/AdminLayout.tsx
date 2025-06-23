@@ -1,24 +1,25 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { User, LogOut, Home, LayoutDashboard, Users, Settings, Store } from 'lucide-react';
+import { User, LogOut, LayoutDashboard } from 'lucide-react';
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
-const AdminLayout: React.FC<AdminLayoutProps> = ({
-  children
-}) => {
-  const {
-    signOut,
-    userDetails
-  } = useAuth();
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const { signOut, userDetails } = useAuth();
   const navigate = useNavigate();
+
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
   };
-  return <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
+
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
       {/* Sidebar para desktop */}
       <aside className="w-64 bg-gray-900 text-white hidden md:flex flex-col">
         <div className="p-4 border-b border-gray-800">
@@ -36,12 +37,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
                 <LayoutDashboard size={18} />
                 <span>Dashboard</span>
               </Link>
-            </li>
-            <li>
-              
-            </li>
-            <li>
-              
             </li>
           </ul>
         </nav>
@@ -79,6 +74,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       <main className="flex-1 overflow-auto">
         {children}
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default AdminLayout;

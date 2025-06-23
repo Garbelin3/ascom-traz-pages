@@ -9,71 +9,20 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      comercios: {
+      motoristas: {
         Row: {
+          ano_veiculo: number | null
           cep: string
           cidade: string
+          cnh: string | null
+          cor_veiculo: string | null
           created_at: string | null
           endereco: string
           estado: string
           id: string
-          nome_estabelecimento: string
-          nome_responsavel: string
-          status: Database["public"]["Enums"]["approval_status"]
-          telefone: string
-          tipo_negocio: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          cep: string
-          cidade: string
-          created_at?: string | null
-          endereco: string
-          estado: string
-          id?: string
-          nome_estabelecimento: string
-          nome_responsavel: string
-          status?: Database["public"]["Enums"]["approval_status"]
-          telefone: string
-          tipo_negocio: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          cep?: string
-          cidade?: string
-          created_at?: string | null
-          endereco?: string
-          estado?: string
-          id?: string
-          nome_estabelecimento?: string
-          nome_responsavel?: string
-          status?: Database["public"]["Enums"]["approval_status"]
-          telefone?: string
-          tipo_negocio?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "comercios_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      entregadores: {
-        Row: {
-          cep: string
-          cidade: string
-          created_at: string | null
-          endereco: string
-          estado: string
-          id: string
-          nome: string
+          modelo_veiculo: string | null
+          nome_completo: string
+          placa_veiculo: string | null
           status: Database["public"]["Enums"]["approval_status"]
           telefone: string
           updated_at: string | null
@@ -81,13 +30,18 @@ export type Database = {
           veiculo: Database["public"]["Enums"]["vehicle_type"]
         }
         Insert: {
+          ano_veiculo?: number | null
           cep: string
           cidade: string
+          cnh?: string | null
+          cor_veiculo?: string | null
           created_at?: string | null
           endereco: string
           estado: string
           id?: string
-          nome: string
+          modelo_veiculo?: string | null
+          nome_completo: string
+          placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["approval_status"]
           telefone: string
           updated_at?: string | null
@@ -95,13 +49,18 @@ export type Database = {
           veiculo: Database["public"]["Enums"]["vehicle_type"]
         }
         Update: {
+          ano_veiculo?: number | null
           cep?: string
           cidade?: string
+          cnh?: string | null
+          cor_veiculo?: string | null
           created_at?: string | null
           endereco?: string
           estado?: string
           id?: string
-          nome?: string
+          modelo_veiculo?: string | null
+          nome_completo?: string
+          placa_veiculo?: string | null
           status?: Database["public"]["Enums"]["approval_status"]
           telefone?: string
           updated_at?: string | null
@@ -113,6 +72,56 @@ export type Database = {
             foreignKeyName: "entregadores_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      passageiros: {
+        Row: {
+          cep: string
+          cidade: string
+          created_at: string | null
+          endereco_favorito: string | null
+          estado: string
+          id: string
+          nome_completo: string
+          status: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cep: string
+          cidade: string
+          created_at?: string | null
+          endereco_favorito?: string | null
+          estado: string
+          id?: string
+          nome_completo: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cep?: string
+          cidade?: string
+          created_at?: string | null
+          endereco_favorito?: string | null
+          estado?: string
+          id?: string
+          nome_completo?: string
+          status?: Database["public"]["Enums"]["approval_status"]
+          telefone?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "passageiros_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -154,7 +163,7 @@ export type Database = {
     }
     Enums: {
       approval_status: "pendente" | "aprovado" | "reprovado"
-      user_role: "admin" | "entregador" | "comercio"
+      user_role: "admin" | "passageiro" | "motorista"
       vehicle_type: "moto" | "carro" | "bicicleta"
     }
     CompositeTypes: {
@@ -272,7 +281,7 @@ export const Constants = {
   public: {
     Enums: {
       approval_status: ["pendente", "aprovado", "reprovado"],
-      user_role: ["admin", "entregador", "comercio"],
+      user_role: ["admin", "passageiro", "motorista"],
       vehicle_type: ["moto", "carro", "bicicleta"],
     },
   },

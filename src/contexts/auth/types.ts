@@ -4,7 +4,7 @@ import { Session, User } from '@supabase/supabase-js';
 export type UserDetails = {
   id: string;
   email: string;
-  role: 'admin' | 'entregador' | 'comercio';
+  role: 'admin' | 'motorista' | 'passageiro';
   status: 'pendente' | 'aprovado' | 'reprovado';
   created_at: string | null;
   updated_at: string | null;

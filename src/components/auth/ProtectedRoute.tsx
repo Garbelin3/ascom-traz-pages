@@ -33,10 +33,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     switch (userDetails.role) {
       case 'admin':
         return <Navigate to="/admin/dashboard" replace />;
-      case 'entregador':
-        return <Navigate to="/entregador/dashboard" replace />;
-      case 'comercio':
-        return <Navigate to="/comercio/dashboard" replace />;
+      case 'motorista':
+        return <Navigate to="/motorista/dashboard" replace />;
+      case 'passageiro':
+        return <Navigate to="/passageiro/dashboard" replace />;
       default:
         return <Navigate to="/" replace />;
     }

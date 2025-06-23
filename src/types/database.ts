@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'entregador' | 'comercio';
+export type UserRole = 'admin' | 'motorista' | 'passageiro';
 export type ApprovalStatus = 'pendente' | 'aprovado' | 'reprovado';
 export type VehicleType = 'moto' | 'carro' | 'bicicleta';
 
@@ -12,29 +12,32 @@ export interface UserRecord {
   updated_at: string | null;
 }
 
-export interface EntregadorRecord {
+export interface MotoristaRecord {
   id: string;
   user_id: string;
-  nome: string;
+  nome_completo: string;
   telefone: string;
   endereco: string;
   cidade: string;
   estado: string;
   cep: string;
   veiculo: VehicleType;
+  cnh: string | null;
+  ano_veiculo: number | null;
+  modelo_veiculo: string | null;
+  placa_veiculo: string | null;
+  cor_veiculo: string | null;
   status: ApprovalStatus;
   created_at: string | null;
   updated_at: string | null;
 }
 
-export interface ComercioRecord {
+export interface PassageiroRecord {
   id: string;
   user_id: string;
-  nome_estabelecimento: string;
-  nome_responsavel: string;
+  nome_completo: string;
   telefone: string;
-  tipo_negocio: string;
-  endereco: string;
+  endereco_favorito: string | null;
   cidade: string;
   estado: string;
   cep: string;
