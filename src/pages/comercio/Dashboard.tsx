@@ -1,96 +1,36 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Check, X, Store } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Store, AlertCircle } from 'lucide-react';
 
 const ComercioDashboard: React.FC = () => {
-  const { user, signOut } = useAuth();
-  const [comercioData, setComercioData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchComercioData = async () => {
-      if (!user) return;
+    // Redirecionar para passageiro dashboard após 3 segundos
+    const timer = setTimeout(() => {
+      navigate('/passageiro/dashboard');
+    }, 3000);
 
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('comercios')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        setComercioData(data);
-      } catch (error) {
-        console.error('Erro ao buscar dados do comércio:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchComercioData();
-  }, [user]);
+    return () => clearTimeout(timer);
+  }, [navigate]);
 
   const handleLogout = async () => {
     await signOut();
     navigate('/login');
   };
 
-  const getStatusComponent = (status: string) => {
-    switch (status) {
-      case 'aprovado':
-        return (
-          <div className="flex items-center gap-2 text-green-600">
-            <Check size={20} />
-            <span>Conta aprovada! Você pode começar a solicitar entregas.</span>
-          </div>
-        );
-      case 'reprovado':
-        return (
-          <div className="flex items-center gap-2 text-red-600">
-            <X size={20} />
-            <span>Cadastro reprovado. Entre em contato para mais informações.</span>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center gap-2 text-yellow-600">
-            <AlertCircle size={20} />
-            <span>Cadastro em análise. Aguarde a aprovação.</span>
-          </div>
-        );
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-ascom rounded-full"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-ascom text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Logo" className="h-8 w-auto" />
-            <h1 className="text-xl font-bold">Comércio Dashboard</h1>
+            <Store className="h-8 w-8" />
+            <h1 className="text-xl font-bold">Dashboard Indisponível</h1>
           </div>
           <Button variant="ghost" className="text-white hover:bg-ascom-dark" onClick={handleLogout}>
             Sair
@@ -101,63 +41,36 @@ const ComercioDashboard: React.FC = () => {
       <main className="container mx-auto p-4 md:p-6">
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Status da Conta</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-6 w-6 text-yellow-600" />
+              Funcionalidade Temporariamente Indisponível
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            {comercioData ? getStatusComponent(comercioData.status) : 'Erro ao carregar status'}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações do Estabelecimento</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {comercioData ? (
-              <div className="space-y-2">
-                <div>
-                  <span className="font-semibold">Nome do Estabelecimento:</span> {comercioData.nome_estabelecimento}
-                </div>
-                <div>
-                  <span className="font-semibold">Responsável:</span> {comercioData.nome_responsavel}
-                </div>
-                <div>
-                  <span className="font-semibold">Telefone:</span> {comercioData.telefone}
-                </div>
-                <div>
-                  <span className="font-semibold">Endereço:</span> {comercioData.endereco}
-                </div>
-                <div>
-                  <span className="font-semibold">Cidade:</span> {comercioData.cidade}, {comercioData.estado}
-                </div>
-                <div>
-                  <span className="font-semibold">CEP:</span> {comercioData.cep}
-                </div>
-                <div>
-                  <span className="font-semibold">Tipo de Negócio:</span> {comercioData.tipo_negocio}
-                </div>
-              </div>
-            ) : (
-              <p>Erro ao carregar informações</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {comercioData && comercioData.status === 'aprovado' && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Solicitar Entregas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Para solicitar entregas, entre em contato com nossa central de atendimento.
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                O dashboard de comércio foi temporariamente removido do sistema.
               </p>
-              <Button className="bg-ascom hover:bg-ascom-dark">
-                Solicitar Entrega
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              <p className="text-gray-600">
+                Você será redirecionado automaticamente para o dashboard de passageiro em alguns segundos.
+              </p>
+              <div className="flex gap-4">
+                <Button 
+                  onClick={() => navigate('/passageiro/dashboard')}
+                  className="bg-ascom hover:bg-ascom-dark"
+                >
+                  Ir para Dashboard de Passageiro
+                </Button>
+                <Button 
+                  onClick={() => navigate('/')}
+                  variant="outline"
+                >
+                  Voltar ao Início
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </main>
     </div>
   );
