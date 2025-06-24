@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Check, X, User, MapPin } from 'lucide-react';
 import MapSelector from '@/components/MapSelector';
+import StatusCard from '@/components/passageiro/StatusCard';
+import UserHeader from '@/components/passageiro/UserHeader';
+import PendingApprovalCard from '@/components/passageiro/PendingApprovalCard';
 import { toast } from '@/components/ui/use-toast';
 
 interface Location {
@@ -73,32 +73,6 @@ const PassageiroDashboard: React.FC = () => {
     }
   };
 
-  const getStatusComponent = (status: string) => {
-    switch (status) {
-      case 'aprovado':
-        return (
-          <div className="flex items-center gap-2 text-green-600">
-            <Check size={20} />
-            <span>Conta aprovada! Você pode solicitar corridas.</span>
-          </div>
-        );
-      case 'reprovado':
-        return (
-          <div className="flex items-center gap-2 text-red-600">
-            <X size={20} />
-            <span>Cadastro reprovado. Entre em contato para mais informações.</span>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center gap-2 text-yellow-600">
-            <AlertCircle size={20} />
-            <span>Cadastro em análise. Aguarde a aprovação.</span>
-          </div>
-        );
-    }
-  };
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -109,46 +83,17 @@ const PassageiroDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-ascom text-white p-4 shadow-md">
-        <div className="container mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <User className="h-8 w-8" />
-            <h1 className="text-xl font-bold">Dashboard Passageiro</h1>
-          </div>
-          <Button variant="ghost" className="text-white hover:bg-ascom-dark" onClick={handleLogout}>
-            Sair
-          </Button>
-        </div>
-      </header>
+      <UserHeader onLogout={handleLogout} />
 
       <main className="container mx-auto p-4 md:p-6 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Status da Conta</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {passageiroData ? getStatusComponent(passageiroData.status) : 'Erro ao carregar status'}
-          </CardContent>
-        </Card>
+        <StatusCard status={passageiroData?.status || 'pendente'} />
 
         {passageiroData && passageiroData.status === 'aprovado' && (
           <MapSelector onRouteSelect={handleRouteSelect} />
         )}
 
         {passageiroData && passageiroData.status !== 'aprovado' && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Solicitar Corrida
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600">
-                Aguarde a aprovação da sua conta para poder solicitar corridas.
-              </p>
-            </CardContent>
-          </Card>
+          <PendingApprovalCard />
         )}
       </main>
     </div>
