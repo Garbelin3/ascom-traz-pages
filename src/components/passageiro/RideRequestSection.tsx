@@ -1,6 +1,6 @@
 
 import React from 'react';
-import MapSelector from '@/components/MapSelector';
+import SimpleMapSelector from '@/components/SimpleMapSelector';
 
 interface Location {
   lat: number;
@@ -17,8 +17,7 @@ const RideRequestSection: React.FC<RideRequestSectionProps> = ({
   passageiroData, 
   onRouteSelect 
 }) => {
-  // Sempre mostra o mapa para solicitar corridas, independente do status
-  return <MapSelector onRouteSelect={onRouteSelect} />;
+  return <SimpleMapSelector onRouteSelect={onRouteSelect} />;
 };
 
 export default RideRequestSection;

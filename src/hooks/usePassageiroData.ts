@@ -9,7 +9,10 @@ export const usePassageiroData = (user: User | null) => {
 
   useEffect(() => {
     const fetchPassageiroData = async () => {
-      if (!user) return;
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -17,15 +20,17 @@ export const usePassageiroData = (user: User | null) => {
           .from('passageiros')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          throw error;
+          console.error('Erro ao buscar dados do passageiro:', error);
+          setPassageiroData(null);
+        } else {
+          setPassageiroData(data);
         }
-
-        setPassageiroData(data);
       } catch (error) {
         console.error('Erro ao buscar dados do passageiro:', error);
+        setPassageiroData(null);
       } finally {
         setIsLoading(false);
       }

@@ -2,7 +2,6 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import StatusCard from '@/components/passageiro/StatusCard';
 import UserHeader from '@/components/passageiro/UserHeader';
 import PersonalInfoCard from '@/components/passageiro/PersonalInfoCard';
 import RideRequestSection from '@/components/passageiro/RideRequestSection';
@@ -27,7 +26,6 @@ const PassageiroDashboard: React.FC = () => {
 
   const handleRouteSelect = async (origin: Location, destination: Location) => {
     try {
-      // Aqui você pode salvar a solicitação de corrida no banco
       console.log('Origem:', origin);
       console.log('Destino:', destination);
       
@@ -58,7 +56,6 @@ const PassageiroDashboard: React.FC = () => {
       <UserHeader onLogout={handleLogout} />
 
       <main className="container mx-auto p-4 md:p-6 space-y-6">
-        {/* Sempre mostra o mapa para solicitar corridas */}
         <RideRequestSection 
           passageiroData={passageiroData}
           onRouteSelect={handleRouteSelect}
