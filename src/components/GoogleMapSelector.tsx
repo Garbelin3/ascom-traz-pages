@@ -22,29 +22,61 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
   const destinationPickerRef = useRef<any>(null);
 
   useEffect(() => {
+    console.log('GoogleMapSelector: Iniciando carregamento do mapa...');
+    
     const loadGoogleMaps = async () => {
-      // Carregar o script do Google Maps Extended Components
-      const script = document.createElement('script');
-      script.type = 'module';
-      script.src = 'https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js';
-      document.head.appendChild(script);
+      try {
+        console.log('GoogleMapSelector: Carregando script do Google Maps...');
+        
+        // Verificar se o script já foi carregado
+        const existingScript = document.querySelector('script[src*="@googlemaps/extended-component-library"]');
+        if (existingScript) {
+          console.log('GoogleMapSelector: Script já existe, removendo...');
+          existingScript.remove();
+        }
 
-      await new Promise(resolve => {
-        script.onload = resolve;
-      });
+        // Carregar o script do Google Maps Extended Components
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.src = 'https://ajax.googleapis.com/ajax/libs/@googlemaps/extended-component-library/0.6.11/index.min.js';
+        document.head.appendChild(script);
 
-      // Aguardar os custom elements serem definidos
-      await customElements.whenDefined('gmp-map');
-      await customElements.whenDefined('gmpx-place-picker');
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            console.log('GoogleMapSelector: Script carregado com sucesso');
+            resolve(true);
+          };
+          script.onerror = (error) => {
+            console.error('GoogleMapSelector: Erro ao carregar script:', error);
+            reject(error);
+          };
+        });
 
-      if (mapContainerRef.current) {
-        initializeMap();
+        // Aguardar os custom elements serem definidos
+        console.log('GoogleMapSelector: Aguardando definição dos custom elements...');
+        await customElements.whenDefined('gmp-map');
+        await customElements.whenDefined('gmpx-place-picker');
+        console.log('GoogleMapSelector: Custom elements definidos');
+
+        if (mapContainerRef.current) {
+          console.log('GoogleMapSelector: Container encontrado, inicializando mapa...');
+          initializeMap();
+        } else {
+          console.error('GoogleMapSelector: Container não encontrado');
+        }
+      } catch (error) {
+        console.error('GoogleMapSelector: Erro ao carregar Google Maps:', error);
       }
     };
 
     const initializeMap = () => {
-      if (!mapContainerRef.current) return;
+      if (!mapContainerRef.current) {
+        console.error('GoogleMapSelector: Container não disponível para inicialização');
+        return;
+      }
 
+      console.log('GoogleMapSelector: Criando HTML do mapa...');
+      
       const mapHTML = `
         <gmpx-api-loader key="AIzaSyA4UhalNkspnuyotvSjwZlNp_9xyZ-5kyg" solution-channel="GMP_GE_mapsandplacesautocomplete_v2">
         </gmpx-api-loader>
@@ -65,23 +97,35 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
       `;
 
       mapContainerRef.current.innerHTML = mapHTML;
+      console.log('GoogleMapSelector: HTML do mapa inserido');
 
-      // Configurar event listeners após um pequeno delay
+      // Configurar event listeners após um delay maior
       setTimeout(() => {
+        console.log('GoogleMapSelector: Configurando event listeners...');
         setupEventListeners();
-      }, 1000);
+      }, 2000);
     };
 
     const setupEventListeners = () => {
+      console.log('GoogleMapSelector: Buscando elementos do DOM...');
+      
       const map = document.querySelector('gmp-map') as any;
       const originMarker = document.querySelector('#origin-marker') as any;
       const destinationMarker = document.querySelector('#destination-marker') as any;
       const originPicker = document.querySelector('#origin-picker') as any;
       const destinationPicker = document.querySelector('#destination-picker') as any;
 
+      console.log('GoogleMapSelector: Elementos encontrados:', {
+        map: !!map,
+        originMarker: !!originMarker,
+        destinationMarker: !!destinationMarker,
+        originPicker: !!originPicker,
+        destinationPicker: !!destinationPicker
+      });
+
       if (!map || !originMarker || !destinationMarker || !originPicker || !destinationPicker) {
-        console.log('Elementos não encontrados, tentando novamente...');
-        setTimeout(setupEventListeners, 500);
+        console.log('GoogleMapSelector: Alguns elementos não encontrados, tentando novamente em 1s...');
+        setTimeout(setupEventListeners, 1000);
         return;
       }
 
@@ -90,19 +134,23 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
 
       // Configurar o mapa
       if (map.innerMap) {
+        console.log('GoogleMapSelector: Configurando opções do mapa...');
         map.innerMap.setOptions({
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false
         });
+      } else {
+        console.log('GoogleMapSelector: innerMap não disponível ainda');
       }
 
       // Event listener para origem
       originPicker.addEventListener('gmpx-placechange', () => {
+        console.log('GoogleMapSelector: Origem selecionada');
         const place = originPicker.value;
         
         if (!place.location) {
-          console.log('Nenhum local encontrado para origem');
+          console.log('GoogleMapSelector: Nenhum local encontrado para origem');
           return;
         }
 
@@ -126,15 +174,16 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
           map.zoom = 15;
         }
 
-        console.log('Origem selecionada:', originRef.current);
+        console.log('GoogleMapSelector: Origem configurada:', originRef.current);
       });
 
       // Event listener para destino
       destinationPicker.addEventListener('gmpx-placechange', () => {
+        console.log('GoogleMapSelector: Destino selecionado');
         const place = destinationPicker.value;
         
         if (!place.location) {
-          console.log('Nenhum local encontrado para destino');
+          console.log('GoogleMapSelector: Nenhum local encontrado para destino');
           return;
         }
 
@@ -158,20 +207,29 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
           map.innerMap.fitBounds(bounds);
         }
 
-        console.log('Destino selecionado:', destinationRef.current);
+        console.log('GoogleMapSelector: Destino configurado:', destinationRef.current);
       });
+
+      console.log('GoogleMapSelector: Event listeners configurados com sucesso');
     };
 
     loadGoogleMaps();
+
+    // Cleanup function
+    return () => {
+      console.log('GoogleMapSelector: Limpando componente...');
+    };
   }, []);
 
   const handleConfirmRoute = () => {
+    console.log('GoogleMapSelector: Confirmando rota:', { origin: originRef.current, destination: destinationRef.current });
     if (originRef.current && destinationRef.current) {
       onRouteSelect(originRef.current, destinationRef.current);
     }
   };
 
   const handleClearRoute = () => {
+    console.log('GoogleMapSelector: Limpando rota...');
     originRef.current = null;
     destinationRef.current = null;
     
@@ -204,7 +262,15 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
         </div>
         
         {/* Container do mapa */}
-        <div ref={mapContainerRef} className="w-full"></div>
+        <div 
+          ref={mapContainerRef} 
+          className="w-full min-h-[400px] border border-gray-200 rounded-lg"
+          style={{ minHeight: '400px' }}
+        >
+          <div className="flex items-center justify-center h-full text-gray-500">
+            Carregando mapa...
+          </div>
+        </div>
 
         {/* Botões de ação */}
         <div className="flex gap-2">
