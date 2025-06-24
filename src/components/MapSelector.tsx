@@ -91,33 +91,8 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onRouteSelect }) => {
           Clique no mapa para selecionar: primeiro o ponto de partida, depois o destino.
         </div>
         
-        <LoadScript googleMapsApiKey="AIzaSyBFw0Qbyq9zTFTd-tUY6dO_2oQ2W-HnV5M">
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={center}
-            zoom={13}
-            onClick={onMapClick}
-          >
-            {origin && (
-              <Marker
-                position={origin}
-                icon={{
-                  url: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%234CAF50"%3E%3Cpath d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/%3E%3C/svg%3E'
-                }}
-              />
-            )}
-            {destination && (
-              <Marker
-                position={destination}
-                icon={{
-                  url: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23F44336"%3E%3Cpath d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/%3E%3C/svg%3E'
-                }}
-              />
-            )}
-          </GoogleMap>
-        </LoadScript>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Campos de origem e destino ACIMA do mapa */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-green-500" />
@@ -144,6 +119,42 @@ const MapSelector: React.FC<MapSelectorProps> = ({ onRouteSelect }) => {
           </div>
         </div>
 
+        {/* Mapa abaixo dos campos */}
+        <LoadScript googleMapsApiKey="AIzaSyBFw0Qbyq9zTFTd-tUY6dO_2oQ2W-HnV5M">
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={center}
+            zoom={13}
+            onClick={onMapClick}
+            options={{
+              zoomControl: true,
+              streetViewControl: false,
+              mapTypeControl: false,
+              fullscreenControl: false,
+            }}
+          >
+            {origin && (
+              <Marker
+                position={origin}
+                icon={{
+                  url: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%234CAF50"%3E%3Cpath d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/%3E%3C/svg%3E'
+                }}
+                title="Ponto de Partida"
+              />
+            )}
+            {destination && (
+              <Marker
+                position={destination}
+                icon={{
+                  url: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="%23F44336"%3E%3Cpath d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/%3E%3C/svg%3E'
+                }}
+                title="Destino"
+              />
+            )}
+          </GoogleMap>
+        </LoadScript>
+
+        {/* Botões de ação */}
         <div className="flex gap-2">
           <Button
             onClick={confirmRoute}
