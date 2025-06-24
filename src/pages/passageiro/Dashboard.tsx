@@ -19,7 +19,6 @@ const PassageiroDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const [passageiroData, setPassageiroData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showMap, setShowMap] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,8 +63,6 @@ const PassageiroDashboard: React.FC = () => {
         title: "Corrida solicitada!",
         description: "Sua solicitação foi enviada aos entregadores da região.",
       });
-      
-      setShowMap(false);
     } catch (error) {
       console.error('Erro ao solicitar corrida:', error);
       toast({
@@ -135,63 +132,24 @@ const PassageiroDashboard: React.FC = () => {
         </Card>
 
         {passageiroData && passageiroData.status === 'aprovado' && (
-          <>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5" />
-                  Solicitar Corrida
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4">
-                  Clique no botão abaixo para definir os pontos da sua corrida no mapa.
-                </p>
-                <Button 
-                  onClick={() => setShowMap(!showMap)}
-                  className="bg-ascom hover:bg-ascom-dark"
-                >
-                  {showMap ? 'Fechar Mapa' : 'Abrir Mapa'}
-                </Button>
-              </CardContent>
-            </Card>
-
-            {showMap && (
-              <MapSelector onRouteSelect={handleRouteSelect} />
-            )}
-          </>
+          <MapSelector onRouteSelect={handleRouteSelect} />
         )}
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações Pessoais</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {passageiroData ? (
-              <div className="space-y-2">
-                <div>
-                  <span className="font-semibold">Nome:</span> {passageiroData.nome_completo}
-                </div>
-                <div>
-                  <span className="font-semibold">Telefone:</span> {passageiroData.telefone}
-                </div>
-                {passageiroData.endereco_favorito && (
-                  <div>
-                    <span className="font-semibold">Endereço Favorito:</span> {passageiroData.endereco_favorito}
-                  </div>
-                )}
-                <div>
-                  <span className="font-semibold">Cidade:</span> {passageiroData.cidade}, {passageiroData.estado}
-                </div>
-                <div>
-                  <span className="font-semibold">CEP:</span> {passageiroData.cep}
-                </div>
-              </div>
-            ) : (
-              <p>Erro ao carregar informações</p>
-            )}
-          </CardContent>
-        </Card>
+        {passageiroData && passageiroData.status !== 'aprovado' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Solicitar Corrida
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600">
+                Aguarde a aprovação da sua conta para poder solicitar corridas.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );
