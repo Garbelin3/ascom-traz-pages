@@ -1,6 +1,6 @@
 
 import React from 'react';
-import SimpleMapSelector from '@/components/SimpleMapSelector';
+import GoogleMapSelector from '@/components/GoogleMapSelector';
 
 interface Location {
   lat: number;
@@ -17,7 +17,7 @@ const RideRequestSection: React.FC<RideRequestSectionProps> = ({
   passageiroData, 
   onRouteSelect 
 }) => {
-  return <SimpleMapSelector onRouteSelect={onRouteSelect} />;
+  return <GoogleMapSelector onRouteSelect={onRouteSelect} />;
 };
 
 export default RideRequestSection;
