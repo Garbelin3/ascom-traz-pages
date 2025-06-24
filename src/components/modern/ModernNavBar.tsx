@@ -221,9 +221,7 @@ const ModernNavBar = () => {
                     Sou Entregador
                   </Link>
                   
-                  <Link to="/cadastro-comercio" className="block w-full px-6 py-3 border-2 border-ascom text-ascom rounded-xl font-medium text-center hover:bg-ascom hover:text-white transition-all duration-300" onClick={() => setIsMobileMenuOpen(false)}>
-                    Tenho Comércio
-                  </Link>
+                  <Link to="/cadastro-comercio" className="block w-full px-6 py-3 border-2 border-ascom text-ascom rounded-xl font-medium text-center hover:bg-ascom hover:text-white transition-all duration-300" onClick={() => setIsMobileMenuOpen(false)}>Quero uma corrida!</Link>
                 </div>
 
                 {/* Contact Info */}
