@@ -58,8 +58,7 @@ const PassageiroDashboard: React.FC = () => {
       <UserHeader onLogout={handleLogout} />
 
       <main className="container mx-auto p-4 md:p-6 space-y-6">
-        <StatusCard status={passageiroData?.status || 'pendente'} />
-        
+        {/* Sempre mostra o mapa para solicitar corridas */}
         <RideRequestSection 
           passageiroData={passageiroData}
           onRouteSelect={handleRouteSelect}

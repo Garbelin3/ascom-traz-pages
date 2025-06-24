@@ -1,7 +1,6 @@
 
 import React from 'react';
 import MapSelector from '@/components/MapSelector';
-import PendingApprovalCard from './PendingApprovalCard';
 
 interface Location {
   lat: number;
@@ -18,13 +17,8 @@ const RideRequestSection: React.FC<RideRequestSectionProps> = ({
   passageiroData, 
   onRouteSelect 
 }) => {
-  if (!passageiroData) return null;
-
-  if (passageiroData.status === 'aprovado') {
-    return <MapSelector onRouteSelect={onRouteSelect} />;
-  }
-
-  return <PendingApprovalCard />;
+  // Sempre mostra o mapa para solicitar corridas, independente do status
+  return <MapSelector onRouteSelect={onRouteSelect} />;
 };
 
 export default RideRequestSection;
