@@ -5,12 +5,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Check, X, User } from 'lucide-react';
+import { AlertCircle, Check, X, User, MapPin } from 'lucide-react';
+import MapSelector from '@/components/MapSelector';
+import { toast } from '@/components/ui/use-toast';
+
+interface Location {
+  lat: number;
+  lng: number;
+  address?: string;
+}
 
 const PassageiroDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
   const [passageiroData, setPassageiroData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showMap, setShowMap] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,13 +54,35 @@ const PassageiroDashboard: React.FC = () => {
     navigate('/login');
   };
 
+  const handleRouteSelect = async (origin: Location, destination: Location) => {
+    try {
+      // Aqui você pode salvar a solicitação de corrida no banco
+      console.log('Origem:', origin);
+      console.log('Destino:', destination);
+      
+      toast({
+        title: "Corrida solicitada!",
+        description: "Sua solicitação foi enviada aos entregadores da região.",
+      });
+      
+      setShowMap(false);
+    } catch (error) {
+      console.error('Erro ao solicitar corrida:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível solicitar a corrida. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const getStatusComponent = (status: string) => {
     switch (status) {
       case 'aprovado':
         return (
           <div className="flex items-center gap-2 text-green-600">
             <Check size={20} />
-            <span>Conta aprovada! Você pode começar a solicitar corridas.</span>
+            <span>Conta aprovada! Você pode solicitar corridas.</span>
           </div>
         );
       case 'reprovado':
@@ -85,7 +116,7 @@ const PassageiroDashboard: React.FC = () => {
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center gap-2">
             <User className="h-8 w-8" />
-            <h1 className="text-xl font-bold">Passageiro Dashboard</h1>
+            <h1 className="text-xl font-bold">Dashboard Passageiro</h1>
           </div>
           <Button variant="ghost" className="text-white hover:bg-ascom-dark" onClick={handleLogout}>
             Sair
@@ -93,8 +124,8 @@ const PassageiroDashboard: React.FC = () => {
         </div>
       </header>
 
-      <main className="container mx-auto p-4 md:p-6">
-        <Card className="mb-6">
+      <main className="container mx-auto p-4 md:p-6 space-y-6">
+        <Card>
           <CardHeader>
             <CardTitle>Status da Conta</CardTitle>
           </CardHeader>
@@ -102,6 +133,34 @@ const PassageiroDashboard: React.FC = () => {
             {passageiroData ? getStatusComponent(passageiroData.status) : 'Erro ao carregar status'}
           </CardContent>
         </Card>
+
+        {passageiroData && passageiroData.status === 'aprovado' && (
+          <>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5" />
+                  Solicitar Corrida
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4">
+                  Clique no botão abaixo para definir os pontos da sua corrida no mapa.
+                </p>
+                <Button 
+                  onClick={() => setShowMap(!showMap)}
+                  className="bg-ascom hover:bg-ascom-dark"
+                >
+                  {showMap ? 'Fechar Mapa' : 'Abrir Mapa'}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {showMap && (
+              <MapSelector onRouteSelect={handleRouteSelect} />
+            )}
+          </>
+        )}
 
         <Card>
           <CardHeader>
@@ -133,22 +192,6 @@ const PassageiroDashboard: React.FC = () => {
             )}
           </CardContent>
         </Card>
-
-        {passageiroData && passageiroData.status === 'aprovado' && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Solicitar Corrida</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                Para solicitar corridas, entre em contato com nossa central de atendimento.
-              </p>
-              <Button className="bg-ascom hover:bg-ascom-dark">
-                Solicitar Corrida
-              </Button>
-            </CardContent>
-          </Card>
-        )}
       </main>
     </div>
   );
