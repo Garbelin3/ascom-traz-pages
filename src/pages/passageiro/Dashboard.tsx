@@ -1,13 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import MapSelector from '@/components/MapSelector';
 import StatusCard from '@/components/passageiro/StatusCard';
 import UserHeader from '@/components/passageiro/UserHeader';
-import PendingApprovalCard from '@/components/passageiro/PendingApprovalCard';
-import { toast } from '@/components/ui/use-toast';
+import PersonalInfoCard from '@/components/passageiro/PersonalInfoCard';
+import RideRequestSection from '@/components/passageiro/RideRequestSection';
+import { usePassageiroData } from '@/hooks/usePassageiroData';
+import { toast } from '@/hooks/use-toast';
 
 interface Location {
   lat: number;
@@ -17,36 +17,8 @@ interface Location {
 
 const PassageiroDashboard: React.FC = () => {
   const { user, signOut } = useAuth();
-  const [passageiroData, setPassageiroData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { passageiroData, isLoading } = usePassageiroData(user);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchPassageiroData = async () => {
-      if (!user) return;
-
-      try {
-        setIsLoading(true);
-        const { data, error } = await supabase
-          .from('passageiros')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        setPassageiroData(data);
-      } catch (error) {
-        console.error('Erro ao buscar dados do passageiro:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPassageiroData();
-  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -87,13 +59,14 @@ const PassageiroDashboard: React.FC = () => {
 
       <main className="container mx-auto p-4 md:p-6 space-y-6">
         <StatusCard status={passageiroData?.status || 'pendente'} />
+        
+        <RideRequestSection 
+          passageiroData={passageiroData}
+          onRouteSelect={handleRouteSelect}
+        />
 
-        {passageiroData && passageiroData.status === 'aprovado' && (
-          <MapSelector onRouteSelect={handleRouteSelect} />
-        )}
-
-        {passageiroData && passageiroData.status !== 'aprovado' && (
-          <PendingApprovalCard />
+        {passageiroData && (
+          <PersonalInfoCard passageiroData={passageiroData} />
         )}
       </main>
     </div>
