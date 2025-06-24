@@ -73,11 +73,11 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
     };
 
     const setupEventListeners = () => {
-      const map = document.querySelector('gmp-map');
-      const originMarker = document.querySelector('#origin-marker');
-      const destinationMarker = document.querySelector('#destination-marker');
-      const originPicker = document.querySelector('#origin-picker');
-      const destinationPicker = document.querySelector('#destination-picker');
+      const map = document.querySelector('gmp-map') as any;
+      const originMarker = document.querySelector('#origin-marker') as any;
+      const destinationMarker = document.querySelector('#destination-marker') as any;
+      const originPicker = document.querySelector('#origin-picker') as any;
+      const destinationPicker = document.querySelector('#destination-picker') as any;
 
       if (!map || !originMarker || !destinationMarker || !originPicker || !destinationPicker) {
         console.log('Elementos não encontrados, tentando novamente...');
@@ -152,9 +152,9 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
 
         // Ajustar visualização para mostrar ambos os pontos
         if (originRef.current && map.innerMap) {
-          const bounds = new google.maps.LatLngBounds();
-          bounds.extend(new google.maps.LatLng(originRef.current.lat, originRef.current.lng));
-          bounds.extend(new google.maps.LatLng(destinationRef.current.lat, destinationRef.current.lng));
+          const bounds = new (window as any).google.maps.LatLngBounds();
+          bounds.extend(new (window as any).google.maps.LatLng(originRef.current.lat, originRef.current.lng));
+          bounds.extend(new (window as any).google.maps.LatLng(destinationRef.current.lat, destinationRef.current.lng));
           map.innerMap.fitBounds(bounds);
         }
 
@@ -184,8 +184,8 @@ const GoogleMapSelector: React.FC<GoogleMapSelectorProps> = ({ onRouteSelect }) 
     }
 
     // Limpar marcadores
-    const originMarker = document.querySelector('#origin-marker');
-    const destinationMarker = document.querySelector('#destination-marker');
+    const originMarker = document.querySelector('#origin-marker') as any;
+    const destinationMarker = document.querySelector('#destination-marker') as any;
     if (originMarker) originMarker.position = null;
     if (destinationMarker) destinationMarker.position = null;
   };
